@@ -1,1357 +1,1745 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NeuroPep | Advanced Peptide Research</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-  <style>
-    /*
-     * ══════════════════════════════════════════════
-     *  DESIGN TOKENS — Scientifically Grounded
-     * ══════════════════════════════════════════════
-     *  Colour Psychology References:
-     *  • Hallock (2003): Blue universally preferred
-     *    colour globally: 35.6% men, 27.3% women.
-     *  • Mehta & Zhu (2009, Science): Blue enhances
-     *    analytical performance & trust.
-     *  • Küller et al. (2009): Dark high-contrast UIs
-     *    reduce visual fatigue in sustained viewing.
-     *  • Elliot & Maier (2012): Cool-blue environments
-     *    consistently rated as competent & credible.
-     * ══════════════════════════════════════════════
-     */
-    :root {
-      --void:        #020C1B;
-      --deep:        #071524;
-      --surface:     #0D1F36;
-      --elevated:    #122842;
-      --panel:       #0A1B30;
-
-      --cyan:        #00D4FF;
-      --cyan-dim:    #008EAA;
-      --cyan-glow:   rgba(0,212,255,.12);
-      --cyan-trace:  rgba(0,212,255,.06);
-
-      --violet:      #8B5CF6;
-      --violet-dim:  #5B3FA8;
-      --violet-glow: rgba(139,92,246,.12);
-
-      --green:       #00FFA3;
-      --green-dim:   #00B372;
-
-      --txt-1:       #DCF0FF;
-      --txt-2:       #6B9BB8;
-      --txt-3:       #2E5572;
-
-      --bd-0:        rgba(0,212,255,.07);
-      --bd-1:        rgba(0,212,255,.22);
-      --bd-2:        rgba(0,212,255,.55);
-
-      --r-sm:        6px;
-      --r-md:        10px;
-      --r-lg:        16px;
-
-      --display: 'Space Grotesk', sans-serif;
-      --mono:    'JetBrains Mono', monospace;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--void);
-      color: var(--txt-1);
-      font-family: var(--display);
-      overflow-x: hidden;
-      cursor: none;
-    }
-
-    /* ── CUSTOM CURSOR ── */
-    #cur-dot {
-      position: fixed; z-index: 9999;
-      width: 7px; height: 7px;
-      background: var(--cyan);
-      border-radius: 50%;
-      pointer-events: none;
-      transform: translate(-50%,-50%);
-      box-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,212,255,.4);
-      transition: width .08s, height .08s;
-    }
-    #cur-ring {
-      position: fixed; z-index: 9998;
-      width: 28px; height: 28px;
-      border: 1px solid rgba(0,212,255,.45);
-      border-radius: 50%;
-      pointer-events: none;
-      transform: translate(-50%,-50%);
-      transition: all .14s ease;
-    }
-
-    /* ── HAMBURGER BUTTON ── */
-    #menu-btn {
-      position: fixed; top: 28px; left: 28px;
-      z-index: 1001;
-      background: rgba(7,21,36,.82);
-      backdrop-filter: blur(12px);
-      border: 1px solid var(--bd-0);
-      border-radius: var(--r-md);
-      padding: 13px 14px;
-      cursor: pointer;
-      display: flex; flex-direction: column; gap: 5px;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    #menu-btn:hover {
-      border-color: var(--bd-1);
-      box-shadow: 0 0 20px var(--cyan-glow);
-    }
-    #menu-btn .bar {
-      display: block;
-      width: 22px; height: 2px;
-      background: var(--cyan);
-      border-radius: 2px;
-      box-shadow: 0 0 6px rgba(0,212,255,.6);
-      transition: transform .35s cubic-bezier(.23,1,.32,1),
-                  opacity .25s;
-    }
-    #menu-btn.active .bar:nth-child(1){ transform: translateY(7px) rotate(45deg); }
-    #menu-btn.active .bar:nth-child(2){ opacity: 0; transform: scaleX(0); }
-    #menu-btn.active .bar:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
-
-    /* ── SIDE MENU ── */
-    #side-menu {
-      position: fixed; inset: 0 auto 0 0;
-      width: 270px;
-      background: rgba(7,18,34,.96);
-      backdrop-filter: blur(24px);
-      border-right: 1px solid var(--bd-0);
-      z-index: 1000;
-      transform: translateX(-100%);
-      transition: transform .42s cubic-bezier(.23,1,.32,1);
-      display: flex; flex-direction: column;
-      padding: 100px 0 48px;
-    }
-    #side-menu.open { transform: translateX(0); }
-
-    .menu-logo {
-      position: absolute; top: 26px; left: 24px;
-      font-family: var(--mono); font-weight: 600;
-      font-size: .82rem; letter-spacing: .22em;
-      color: var(--cyan);
-      text-transform: uppercase;
-    }
-    .menu-logo span { color: var(--violet); }
-
-    .nav-section-label {
-      font-family: var(--mono);
-      font-size: .62rem; letter-spacing: .22em;
-      color: var(--txt-3); text-transform: uppercase;
-      padding: 0 22px 6px;
-      margin-top: 8px;
-    }
-    .nav-divider {
-      height: 1px; background: var(--bd-0);
-      margin: 14px 22px;
-    }
-    .nav-link {
-      display: flex; align-items: center; gap: 10px;
-      padding: 13px 22px;
-      color: var(--txt-2);
-      text-decoration: none;
-      font-size: .9rem; font-weight: 500;
-      letter-spacing: .06em; text-transform: uppercase;
-      border-radius: 0;
-      position: relative;
-      transition: color .2s, background .2s;
-      overflow: hidden;
-    }
-    .nav-link::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0;
-      width: 2px;
-      background: var(--cyan);
-      transform: scaleY(0);
-      transition: transform .25s cubic-bezier(.23,1,.32,1);
-    }
-    .nav-link:hover,
-    .nav-link.active {
-      color: var(--cyan);
-      background: var(--cyan-trace);
-    }
-    .nav-link:hover::before,
-    .nav-link.active::before { transform: scaleY(1); }
-    .nav-link .nav-icon {
-      font-family: var(--mono);
-      font-size: .68rem; color: var(--cyan-dim);
-      opacity: 0;
-      transition: opacity .2s;
-    }
-    .nav-link:hover .nav-icon { opacity: 1; }
-
-    /* ── OVERLAY ── */
-    #menu-overlay {
-      position: fixed; inset: 0;
-      background: rgba(2,12,27,.72);
-      z-index: 999; opacity: 0;
-      pointer-events: none;
-      transition: opacity .35s;
-    }
-    #menu-overlay.on { opacity: 1; pointer-events: all; }
-
-    /* ── HERO ── */
-    #hero {
-      position: relative;
-      width: 100vw; height: 100vh;
-      overflow: hidden;
-    }
-    #brain-canvas {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      display: block;
-    }
-    #lens-overlay {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 10;
-      display: block;
-    }
-
-    /* grid overlay for hero */
-    #hero::before {
-      content: '';
-      position: absolute; inset: 0; z-index: 5;
-      background-image:
-        linear-gradient(rgba(0,212,255,.028) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,212,255,.028) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-    }
-
-    .hero-text {
-      position: absolute; z-index: 20;
-      bottom: 13%; left: 50%; transform: translateX(-50%);
-      text-align: center; white-space: nowrap;
-    }
-    .hero-eyebrow {
-      font-family: var(--mono);
-      font-size: .72rem; letter-spacing: .32em;
-      color: var(--cyan); text-transform: uppercase;
-      margin-bottom: 14px;
-      opacity: .9;
-    }
-    .hero-title {
-      font-size: clamp(2.2rem, 4.5vw, 4rem);
-      font-weight: 700; letter-spacing: -.025em; line-height: 1.06;
-      background: linear-gradient(140deg, var(--txt-1) 0%, var(--cyan) 80%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 16px;
-    }
-    .hero-sub {
-      font-size: .98rem; color: var(--txt-2);
-      line-height: 1.72; max-width: 460px;
-      margin: 0 auto;
-    }
-
-    .scroll-arrow {
-      position: absolute; z-index: 20;
-      bottom: 34px; left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: column; align-items: center; gap: 7px;
-    }
-    .scroll-arrow-line {
-      width: 1px; height: 48px;
-      background: linear-gradient(to bottom, var(--cyan), transparent);
-      animation: pulseY 2.2s ease-in-out infinite;
-    }
-    .scroll-arrow-label {
-      font-family: var(--mono); font-size: .6rem;
-      letter-spacing: .22em; color: var(--txt-3);
-      text-transform: uppercase;
-    }
-    @keyframes pulseY {
-      0%,100%{ opacity:.25; transform: scaleY(1); }
-      50%{ opacity:1; transform: scaleY(1.15); }
-    }
-
-    /* ── SHARED SECTION LAYOUT ── */
-    .sec { padding: 110px 0; }
-    .sec-inner {
-      max-width: 1240px; margin: 0 auto;
-      padding: 0 64px;
-    }
-    @media(max-width:768px){
-      .sec { padding: 80px 0; }
-      .sec-inner { padding: 0 24px; }
-    }
-    .sec-bg-deep  { background: var(--deep); }
-    .sec-bg-void  { background: var(--void); }
-
-    .sec-eyebrow {
-      font-family: var(--mono); font-size: .66rem;
-      letter-spacing: .28em; color: var(--cyan);
-      text-transform: uppercase; margin-bottom: 12px;
-    }
-    .sec-title {
-      font-size: clamp(1.7rem,3vw,2.8rem);
-      font-weight: 700; letter-spacing: -.022em; line-height: 1.1;
-    }
-    .sec-sub {
-      margin-top: 14px; color: var(--txt-2);
-      font-size: .97rem; line-height: 1.75;
-      max-width: 580px;
-    }
-    .sec-head { margin-bottom: 58px; }
-
-    /* ── PRODUCTS ── */
-    .grid-products {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
-      gap: 22px;
-    }
-    .prod-card {
-      background: var(--surface);
-      border: 1px solid var(--bd-0);
-      border-radius: var(--r-lg);
-      padding: 28px 26px;
-      position: relative; overflow: hidden;
-      transition: transform .28s ease, border-color .28s, box-shadow .28s;
-    }
-    .prod-card::after {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, transparent 0%, var(--cyan) 50%, transparent 100%);
-      opacity: 0; transition: opacity .28s;
-    }
-    .prod-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--bd-1);
-      box-shadow: 0 24px 64px rgba(0,212,255,.07);
-    }
-    .prod-card:hover::after { opacity: 1; }
-
-    .prod-tag {
-      display: inline-block;
-      font-family: var(--mono); font-size: .62rem;
-      letter-spacing: .1em; text-transform: uppercase;
-      color: var(--cyan); background: var(--cyan-glow);
-      border: 1px solid var(--bd-1);
-      border-radius: 20px; padding: 3px 11px;
-      margin-bottom: 14px;
-    }
-    .prod-name {
-      font-size: 1.25rem; font-weight: 600;
-      letter-spacing: -.01em; margin-bottom: 5px;
-    }
-    .prod-aka {
-      font-family: var(--mono); font-size: .72rem;
-      color: var(--violet); margin-bottom: 12px;
-    }
-    .prod-desc {
-      font-size: .875rem; color: var(--txt-2);
-      line-height: 1.68; margin-bottom: 20px;
-    }
-    .prod-specs { display: flex; flex-direction: column; gap: 0; }
-    .spec-row {
-      display: flex; justify-content: space-between;
-      font-family: var(--mono); font-size: .7rem;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--bd-0);
-    }
-    .spec-row:last-child { border-bottom: none; }
-    .spec-k { color: var(--txt-3); }
-    .spec-v { color: var(--green); }
-
-    /* ── COA ── */
-    .coa-wrap {
-      background: var(--surface);
-      border: 1px solid var(--bd-0);
-      border-radius: var(--r-lg);
-      padding: 44px;
-      position: relative; overflow: hidden;
-    }
-    .coa-wrap::after {
-      content: 'COA';
-      position: absolute; top: -28px; right: 20px;
-      font-size: 7.5rem; font-weight: 800;
-      font-family: var(--mono);
-      color: rgba(0,212,255,.025);
-      pointer-events: none; user-select: none;
-    }
-    .coa-top {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 36px; padding-bottom: 24px;
-      border-bottom: 1px solid var(--bd-0);
-      flex-wrap: wrap; gap: 16px;
-    }
-    .coa-badge {
-      font-family: var(--mono); font-size: .68rem;
-      letter-spacing: .12em;
-      background: linear-gradient(135deg, var(--cyan-dim), var(--violet-dim));
-      color: #fff; padding: 6px 18px; border-radius: 20px;
-      font-weight: 500;
-    }
-    .coa-select {
-      background: var(--elevated); border: 1px solid var(--bd-0);
-      color: var(--txt-1); font-family: var(--mono);
-      font-size: .8rem; padding: 10px 16px;
-      border-radius: var(--r-sm); cursor: pointer; outline: none;
-      transition: border-color .2s;
-    }
-    .coa-select:hover, .coa-select:focus { border-color: var(--bd-1); }
-    .coa-table {
-      width: 100%; border-collapse: collapse;
-      font-family: var(--mono); font-size: .78rem;
-      margin-bottom: 28px;
-    }
-    .coa-table th {
-      text-align: left; color: var(--txt-3);
-      font-weight: 500; letter-spacing: .12em;
-      text-transform: uppercase;
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--bd-0);
-    }
-    .coa-table td {
-      padding: 11px 14px;
-      border-bottom: 1px solid rgba(0,212,255,.04);
-      color: var(--txt-2);
-      transition: background .15s, color .15s;
-    }
-    .coa-table tr:hover td {
-      background: var(--cyan-trace);
-      color: var(--txt-1);
-    }
-    .coa-pass   { color: var(--green) !important; }
-    .coa-result { color: var(--cyan)  !important; }
-    .coa-footer {
-      font-family: var(--mono); font-size: .68rem;
-      color: var(--txt-3); line-height: 1.8;
-    }
-    .coa-footer em { color: var(--cyan); font-style: normal; }
-
-    /* ── FAQ ── */
-    .faq-list { display: flex; flex-direction: column; gap: 11px; max-width: 820px; }
-    .faq-item {
-      background: var(--surface);
-      border: 1px solid var(--bd-0);
-      border-radius: var(--r-md);
-      overflow: hidden;
-      transition: border-color .2s;
-    }
-    .faq-item.open { border-color: var(--bd-1); }
-    .faq-q {
-      padding: 19px 22px;
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 20px; cursor: pointer;
-      font-size: .92rem; font-weight: 500;
-      transition: color .2s;
-    }
-    .faq-q:hover { color: var(--cyan); }
-    .faq-ic {
-      flex-shrink: 0;
-      width: 22px; height: 22px;
-      border: 1px solid var(--bd-1);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: .85rem; color: var(--cyan);
-      transition: transform .3s cubic-bezier(.23,1,.32,1), background .2s, color .2s;
-    }
-    .faq-item.open .faq-ic {
-      transform: rotate(45deg);
-      background: var(--cyan); color: var(--void);
-    }
-    .faq-body {
-      max-height: 0; overflow: hidden;
-      transition: max-height .42s cubic-bezier(.4,0,.2,1);
-    }
-    .faq-inner {
-      padding: 16px 22px 20px;
-      border-top: 1px solid var(--bd-0);
-      font-size: .875rem; color: var(--txt-2); line-height: 1.78;
-    }
-
-    /* ── CONTACT ── */
-    .contact-grid {
-      display: grid; grid-template-columns: 1fr 1.25fr;
-      gap: 64px; align-items: start;
-    }
-    @media(max-width:768px){ .contact-grid { grid-template-columns: 1fr; gap: 48px; } }
-
-    .contact-info-title {
-      font-size: 1rem; font-weight: 500;
-      margin-bottom: 22px;
-    }
-    .contact-row {
-      display: flex; align-items: center; gap: 13px;
-      padding: 13px 0;
-      border-bottom: 1px solid var(--bd-0);
-      color: var(--txt-2); font-size: .875rem;
-      text-decoration: none;
-      transition: color .2s;
-    }
-    .contact-row:hover { color: var(--cyan); }
-    .contact-ic {
-      font-family: var(--mono); font-size: .72rem;
-      color: var(--cyan); width: 20px;
-      flex-shrink: 0;
-    }
-    .response-times { margin-top: 38px; }
-    .response-times h4 { font-size: 1rem; font-weight: 500; margin-bottom: 14px; }
-    .rt-row {
-      font-size: .84rem; line-height: 2.1;
-      font-family: var(--mono);
-    }
-    .rt-orders  { color: var(--green); }
-    .rt-tech    { color: var(--cyan); }
-    .rt-custom  { color: var(--violet); }
-
-    /* form */
-    .contact-form { display: flex; flex-direction: column; gap: 15px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    @media(max-width:480px){ .form-row { grid-template-columns: 1fr; } }
-    .f-group { display: flex; flex-direction: column; gap: 6px; }
-    .f-label {
-      font-family: var(--mono); font-size: .63rem;
-      letter-spacing: .17em; color: var(--txt-3); text-transform: uppercase;
-    }
-    .f-input, .f-textarea {
-      background: var(--surface);
-      border: 1px solid var(--bd-0);
-      color: var(--txt-1);
-      font-family: var(--display); font-size: .9rem;
-      padding: 11px 15px; border-radius: var(--r-sm);
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .f-input:focus, .f-textarea:focus {
-      border-color: var(--bd-1);
-      box-shadow: 0 0 0 3px rgba(0,212,255,.08);
-    }
-    .f-input::placeholder, .f-textarea::placeholder { color: var(--txt-3); }
-    .f-textarea { resize: vertical; min-height: 118px; }
-    .btn-send {
-      align-self: flex-start;
-      background: linear-gradient(135deg, var(--cyan-dim) 0%, var(--violet-dim) 100%);
-      color: #fff; border: none;
-      padding: 13px 30px; border-radius: var(--r-sm);
-      font-family: var(--display); font-weight: 600;
-      font-size: .88rem; letter-spacing: .04em;
-      cursor: pointer;
-      transition: transform .2s, box-shadow .2s;
-    }
-    .btn-send:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 28px rgba(0,212,255,.22);
-    }
-
-    /* ── FOOTER ── */
-    footer {
-      background: var(--deep);
-      border-top: 1px solid var(--bd-0);
-      padding: 36px 64px;
-      display: flex; justify-content: space-between;
-      align-items: center; flex-wrap: wrap; gap: 16px;
-    }
-    @media(max-width:768px){ footer { padding: 28px 24px; } }
-    .footer-logo {
-      font-family: var(--mono); font-weight: 700;
-      font-size: .88rem; letter-spacing: .22em;
-      color: var(--cyan);
-    }
-    .footer-logo span { color: var(--violet); }
-    .footer-disc {
-      font-size: .72rem; color: var(--txt-3);
-      max-width: 540px; line-height: 1.65;
-    }
-
-    /* ── SCANLINE VIGNETTE ── */
-    body::after {
-      content: ''; position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse at center, transparent 55%, rgba(2,12,27,.55) 100%),
-        repeating-linear-gradient(
-          0deg,
-          transparent,
-          transparent 3px,
-          rgba(0,0,0,.012) 3px,
-          rgba(0,0,0,.012) 4px
-        );
-      pointer-events: none; z-index: 9997;
-    }
-
-    /* ── REVEAL ANIMATION ── */
-    .reveal { opacity: 0; transform: translateY(26px); transition: opacity .65s ease, transform .65s ease; }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
-  </style>
-</head>
-<body>
-
-  <!-- Custom Cursor -->
-  <div id="cur-dot"></div>
-  <div id="cur-ring"></div>
-
-  <!-- Menu overlay -->
-  <div id="menu-overlay"></div>
-
-  <!-- Hamburger -->
-  <button id="menu-btn" aria-label="Open navigation">
-    <span class="bar"></span>
-    <span class="bar"></span>
-    <span class="bar"></span>
-  </button>
-
-  <!-- Side Navigation -->
-  <nav id="side-menu" aria-label="Main Navigation">
-    <div class="menu-logo">NEURO<span>PEP</span></div>
-
-    <span class="nav-section-label">Navigation</span>
-    <a href="#products" class="nav-link">
-      <span class="nav-icon">▸</span> Products
-    </a>
-    <a href="#coa" class="nav-link">
-      <span class="nav-icon">▸</span> COA
-    </a>
-    <div class="nav-divider"></div>
-    <a href="#faq" class="nav-link">
-      <span class="nav-icon">▸</span> FAQ
-    </a>
-    <a href="#contact" class="nav-link">
-      <span class="nav-icon">▸</span> Contact Us
-    </a>
-  </nav>
-
-  <!-- ══════════ HERO ══════════ -->
-  <section id="hero">
-    <canvas id="brain-canvas"></canvas>
-    <canvas id="lens-overlay"></canvas>
-
-    <div class="hero-text">
-      <p class="hero-eyebrow">Advanced Peptide Research</p>
-      <h1 class="hero-title">Precision at the<br>Molecular Level</h1>
-      <p class="hero-sub">Research-grade peptides synthesized to pharmaceutical precision. Pushing the frontier of bioregulatory science.</p>
-    </div>
-
-    <div class="scroll-arrow">
-      <div class="scroll-arrow-line"></div>
-      <span class="scroll-arrow-label">Explore</span>
-    </div>
-  </section>
-
-  <!-- ══════════ PRODUCTS ══════════ -->
-  <section id="products" class="sec sec-bg-deep">
-    <div class="sec-inner">
-      <div class="sec-head reveal">
-        <p class="sec-eyebrow">// compound library</p>
-        <h2 class="sec-title">Research Compounds</h2>
-        <p class="sec-sub">Every peptide is synthesised to ≥98% purity via HPLC and confirmed by ESI-MS before dispatch. Acetate salt form as standard.</p>
-      </div>
-
-      <div class="grid-products">
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">Body Protection</span>
-          <h3 class="prod-name">BPC-157</h3>
-          <p class="prod-aka">Body Protective Compound-157</p>
-          <p class="prod-desc">A stable gastric pentadecapeptide fragment exhibiting pronounced cytoprotective and regenerative activity. Sequence: Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">1419.55 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">15 AA</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥99.2%</span></div>
-          </div>
-        </div>
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">Tissue Repair</span>
-          <h3 class="prod-name">TB-500</h3>
-          <p class="prod-aka">Thymosin Beta-4 Synthetic Fragment</p>
-          <p class="prod-desc">A synthetic version of the endogenous 43-residue peptide found in virtually all mammalian cells. Promotes actin polymerisation and cell-migration signalling.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">4963.50 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">43 AA</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.6%</span></div>
-          </div>
-        </div>
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">GH Secretagogue</span>
-          <h3 class="prod-name">CJC-1295</h3>
-          <p class="prod-aka">Modified GRF(1-29) + DAC</p>
-          <p class="prod-desc">A tetrasubstituted GHRH(1-29) analogue with Drug Affinity Complex modification. Covalent binding to circulating albumin extends plasma half-life to 6–8 days.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">3647.28 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Half-life</span><span class="spec-v">6–8 days</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.9%</span></div>
-          </div>
-        </div>
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">GH Secretagogue</span>
-          <h3 class="prod-name">Ipamorelin</h3>
-          <p class="prod-aka">Aib-His-D-2Nal-D-Phe-Lys-NH₂</p>
-          <p class="prod-desc">A selective pentapeptide ghrelin mimetic with high pituitary specificity and negligible impact on cortisol or prolactin — distinguishing it from earlier GHRP analogues.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">711.87 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">5 AA</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥99.0%</span></div>
-          </div>
-        </div>
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">Neuroprotection</span>
-          <h3 class="prod-name">Semax</h3>
-          <p class="prod-aka">ACTH(4-7) Pro-Gly-Pro Analogue</p>
-          <p class="prod-desc">A heptapeptide ACTH analogue with robust nootropic properties. Significantly upregulates BDNF and trkB mRNA expression in the hippocampus and basal forebrain in vivo.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">813.98 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">7 AA</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.5%</span></div>
-          </div>
-        </div>
-
-        <div class="prod-card reveal">
-          <span class="prod-tag">Melanocortin</span>
-          <h3 class="prod-name">PT-141</h3>
-          <p class="prod-aka">Bremelanotide — Cyclic Heptapeptide</p>
-          <p class="prod-desc">A melanocortin receptor agonist (MC1R–MC5R) with high selectivity. Operates via CNS-mediated pathways rather than the peripheral vascular route of prior analogues.</p>
-          <div class="prod-specs">
-            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">1025.18 g/mol</span></div>
-            <div class="spec-row"><span class="spec-k">Structure</span><span class="spec-v">Cyclic 7-AA</span></div>
-            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.8%</span></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ COA ══════════ -->
-  <section id="coa" class="sec sec-bg-void">
-    <div class="sec-inner">
-      <div class="sec-head reveal">
-        <p class="sec-eyebrow">// quality assurance</p>
-        <h2 class="sec-title">Certificate of Analysis</h2>
-        <p class="sec-sub">Triple verification: RP-HPLC purity, ESI-MS identity, and LAL endotoxin testing on every production lot.</p>
-      </div>
-
-      <div class="coa-wrap reveal">
-        <div class="coa-top">
-          <div>
-            <div style="font-family:var(--mono);font-size:.62rem;color:var(--txt-3);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Select Compound</div>
-            <select class="coa-select" id="coa-select">
-              <option value="BPC157">BPC-157 — Lot #NP2025-B157-04</option>
-              <option value="TB500">TB-500 — Lot #NP2025-TB5A-02</option>
-              <option value="CJC">CJC-1295 — Lot #NP2025-CJC3-07</option>
-              <option value="IPA">Ipamorelin — Lot #NP2025-IPA1-05</option>
-            </select>
-          </div>
-          <div class="coa-badge">VERIFIED ✓</div>
-        </div>
-
-        <table class="coa-table">
-          <thead>
-            <tr>
-              <th>Test Parameter</th>
-              <th>Method</th>
-              <th>Specification</th>
-              <th>Result</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="coa-body"></tbody>
-        </table>
-
-        <div class="coa-footer">
-          <em>NeuroPep Laboratories</em> · ISO/IEC 17025 Accredited Testing Facility ·
-          Analysis Date: <span id="coa-date">2025-03-12</span> · Analyst ID: NPL-3847 ·
-          All results expressed as per specification at time of analysis
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ FAQ ══════════ -->
-  <section id="faq" class="sec sec-bg-deep">
-    <div class="sec-inner">
-      <div class="sec-head reveal">
-        <p class="sec-eyebrow">// knowledge base</p>
-        <h2 class="sec-title">Frequently Asked Questions</h2>
-        <p class="sec-sub">Scientific answers on storage, analysis methods, synthesis, and handling for research peptides.</p>
-      </div>
-
-      <div class="faq-list">
-
-        <div class="faq-item reveal">
-          <div class="faq-q">
-            What is the recommended storage protocol for lyophilised peptides?
-            <span class="faq-ic">+</span>
-          </div>
-          <div class="faq-body">
-            <div class="faq-inner">
-              Lyophilised peptides should be stored at −20 °C in a dry environment, protected from light and humidity. Avoid freeze-thaw cycling by preparing single-use aliquots before reconstitution. Bacteriostatic water (0.9% benzyl alcohol) is the preferred reconstitution solvent for extended stability post-reconstitution. Reconstituted aliquots stored at 4 °C remain stable for up to 30 days. Correctly stored lyophilised peptides maintain ≥95% purity for 24 months from the date of manufacture.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item reveal">
-          <div class="faq-q">
-            How is purity determined, and what HPLC method is used?
-            <span class="faq-ic">+</span>
-          </div>
-          <div class="faq-body">
-            <div class="faq-inner">
-              Purity is quantified by reverse-phase HPLC (RP-HPLC) using a C18 column with a water/acetonitrile gradient (0.1% TFA modifier), with area-percentage integration at 220 nm UV. Molecular identity is confirmed by electrospray ionisation mass spectrometry (ESI-MS), comparing theoretical and observed m/z values to within ±0.1 Da. Full HPLC chromatograms and MS spectra are included in each lot's Certificate of Analysis.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item reveal">
-          <div class="faq-q">
-            What is the difference between acetate salt and TFA salt forms?
-            <span class="faq-ic">+</span>
-          </div>
-          <div class="faq-body">
-            <div class="faq-inner">
-              The counterion in the final salt form affects aqueous solubility and biocompatibility. Trifluoroacetate (TFA) salts are the default product of Fmoc SPPS but carry cytotoxicity concerns at higher concentrations. Acetate is a physiological counterion making it preferred for biological research applications. All NeuroPep compounds undergo ion-exchange chromatography to yield acetate form as standard, with residual TFA content consistently below 0.1% by ¹⁹F NMR.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item reveal">
-          <div class="faq-q">
-            What are your minimum order quantities and packaging specifications?
-            <span class="faq-ic">+</span>
-          </div>
-          <div class="faq-body">
-            <div class="faq-inner">
-              Research quantities start at 2 mg for standard peptides and 1 mg for complex or rare sequences. Products are packaged in amber borosilicate glass vials with lyophilised powder under nitrogen atmosphere. Each vial has a tamper-evident seal with lot number and QR code linking to the digital COA. Lyophilised peptides ship at ambient temperature. Reconstituted peptides are dispatched with dry ice. Discreet pharmaceutical-grade secondary packaging ensures product integrity in transit.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item reveal">
-          <div class="faq-q">
-            Do you offer custom peptide synthesis for research projects?
-            <span class="faq-ic">+</span>
-          </div>
-          <div class="faq-body">
-            <div class="faq-inner">
-              Custom synthesis is available for sequences of 2–50 amino acids using Fmoc solid-phase peptide synthesis (SPPS) on automated synthesisers. Services include standard, modified (phosphorylated, biotinylated, fluorescently labelled), cyclic, and stapled peptides. Standard sequences require 10–15 business days. Competitive pricing is available for academic and institutional partners. Please contact the synthesis team with sequence, desired modifications, purity grade (crude / desalted / ≥95% / ≥98%), and required quantity.
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ CONTACT ══════════ -->
-  <section id="contact" class="sec sec-bg-void" style="padding-bottom: 140px;">
-    <div class="sec-inner">
-      <div class="sec-head reveal">
-        <p class="sec-eyebrow">// get in touch</p>
-        <h2 class="sec-title">Contact Us</h2>
-        <p class="sec-sub">Our scientific team handles research enquiries, bulk orders, and custom synthesis proposals.</p>
-      </div>
-
-      <div class="contact-grid">
-        <div class="reveal">
-          <h3 class="contact-info-title">Research Enquiries</h3>
-          <a href="mailto:research@neuropep.com" class="contact-row">
-            <span class="contact-ic">@</span>
-            research@neuropep.com
-          </a>
-          <a href="mailto:orders@neuropep.com" class="contact-row">
-            <span class="contact-ic">@</span>
-            orders@neuropep.com
-          </a>
-          <a href="tel:+18005551234" class="contact-row">
-            <span class="contact-ic">☏</span>
-            +1 (800) 555-1234
-          </a>
-          <div class="contact-row">
-            <span class="contact-ic">◎</span>
-            Mon–Fri, 09:00–17:00 EST
-          </div>
-
-          <div class="response-times">
-            <h4>Response Times</h4>
-            <div class="rt-row">
-              <div class="rt-orders">● Orders: &lt;24 hours</div>
-              <div class="rt-tech">● Technical enquiries: 1–2 business days</div>
-              <div class="rt-custom">● Custom synthesis: 2–3 business days</div>
-            </div>
-          </div>
-        </div>
-
-        <form class="contact-form reveal" onsubmit="handleForm(event)">
-          <div class="form-row">
-            <div class="f-group">
-              <label class="f-label">First Name</label>
-              <input type="text" class="f-input" placeholder="Jane">
-            </div>
-            <div class="f-group">
-              <label class="f-label">Last Name</label>
-              <input type="text" class="f-input" placeholder="Smith">
-            </div>
-          </div>
-          <div class="f-group">
-            <label class="f-label">Email</label>
-            <input type="email" class="f-input" placeholder="jane@institution.edu">
-          </div>
-          <div class="f-group">
-            <label class="f-label">Subject</label>
-            <input type="text" class="f-input" placeholder="Research enquiry / Order / Custom synthesis">
-          </div>
-          <div class="f-group">
-            <label class="f-label">Message</label>
-            <textarea class="f-textarea" placeholder="Describe your research application, compound of interest, or any technical queries…"></textarea>
-          </div>
-          <button type="submit" class="btn-send" id="submit-btn">Send Enquiry →</button>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══════════ FOOTER ══════════ -->
-  <footer>
-    <div class="footer-logo">NEURO<span>PEP</span></div>
-    <p class="footer-disc">All compounds are supplied exclusively for in-vitro research and laboratory purposes. Not intended for human or veterinary use. NeuroPep makes no representation regarding fitness for any particular purpose. Researchers are solely responsible for compliance with applicable local, national, and international regulations.</p>
-  </footer>
-
-  <!-- Three.js CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
-  <script>
-  /* =========================================================
-   *  CURSOR
-   * ========================================================= */
-  const dot  = document.getElementById('cur-dot');
-  const ring = document.getElementById('cur-ring');
-  let rx = 0, ry = 0, cx = 0, cy = 0;
-  document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
-  function moveCursor(){
-    rx += (cx - rx) * 0.16;
-    ry += (cy - ry) * 0.16;
-    dot.style.left  = cx + 'px';
-    dot.style.top   = cy + 'px';
-    ring.style.left = rx + 'px';
-    ring.style.top  = ry + 'px';
-    requestAnimationFrame(moveCursor);
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0F172A" />
+    <meta name="description" content="SYNAPTIQ — a precision commerce platform with verified documentation, interactive cortex model, and secure multi-rail payments." />
+    <title>SYNAPTIQ — Precision Cognitive Platform</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F172A'/%3E%3Cpath d='M16 6l8.5 5v10L16 26l-8.5-5V11L16 6z' fill='none' stroke='%2306B6D4' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%2306B6D4'/%3E%3C/svg%3E" />
+
+    <!-- Tailwind (CDN build, theme inlined below) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        abyss: '#0F172A',
+        panel: '#111C33',
+        well: '#0B1222',
+        signal: { DEFAULT: '#06B6D4', soft: '#22D3EE', deep: '#0E7490' },
+      },
+      fontFamily: {
+        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+      },
+      letterSpacing: { lab: '0.22em' },
+      boxShadow: {
+        'glow-sm': '0 0 22px -6px rgba(6,182,212,.55)',
+        glow: '0 0 56px -10px rgba(6,182,212,.45)',
+        panel: '0 32px 80px -32px rgba(2,6,23,.9)',
+      },
+      backgroundImage: {
+        'signal-fade': 'linear-gradient(135deg, rgba(34,211,238,.16), rgba(6,182,212,.04) 55%, transparent)',
+      },
+    },
+  },
+}
+</script>
+    <style type="text/tailwindcss">
+@layer base {
+  ::selection { @apply bg-signal/30 text-white; }
+  :focus-visible { outline: 2px solid rgba(34,211,238,.8); outline-offset: 3px; border-radius: 4px; }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: #0b1222; }
+  ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 8px; border: 2px solid #0b1222; }
+  ::-webkit-scrollbar-thumb:hover { background: #155e75; }
+}
+@layer components {
+  .lab-grid {
+    background-image:
+      linear-gradient(rgba(148,163,184,.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,184,.055) 1px, transparent 1px);
+    background-size: 56px 56px;
   }
-  moveCursor();
+  .hairline { @apply border-white/[0.07]; }
+  .glass-panel { @apply rounded-2xl border border-white/[0.07] bg-panel/60 backdrop-blur-xl; }
+  .mono-label { @apply font-mono text-[11px] uppercase tracking-lab text-slate-500; }
+  .input-field {
+    @apply w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 transition-colors duration-200 focus:border-signal/60 focus:bg-white/[0.05];
+    outline: none;
+  }
+}
+</style>
 
-  /* =========================================================
-   *  HAMBURGER MENU
-   * ========================================================= */
-  const btn     = document.getElementById('menu-btn');
-  const nav     = document.getElementById('side-menu');
-  const overlay = document.getElementById('menu-overlay');
+    <!-- All npm dependencies, served as ES modules.
+         Every package pins the SAME react/react-dom/three via ?deps, so the
+         CDN dedupes them into one shared instance (no duplicate-React hook
+         errors, no unresolved bare specifiers). -->
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.3.1",
+        "react-dom/client": "https://esm.sh/react-dom@18.3.1/client?deps=react@18.3.1",
+        "three": "https://esm.sh/three@0.169.0",
+        "three/examples/jsm/utils/BufferGeometryUtils.js": "https://esm.sh/three@0.169.0/examples/jsm/utils/BufferGeometryUtils.js",
+        "three/examples/jsm/math/ImprovedNoise.js": "https://esm.sh/three@0.169.0/examples/jsm/math/ImprovedNoise.js",
+        "@react-three/fiber": "https://esm.sh/@react-three/fiber@8.17.10?deps=react@18.3.1,react-dom@18.3.1,three@0.169.0",
+        "framer-motion": "https://esm.sh/framer-motion@11.11.9?deps=react@18.3.1,react-dom@18.3.1",
+        "lucide-react": "https://esm.sh/lucide-react@0.453.0?deps=react@18.3.1"
+      }
+    }
+    </script>
 
-  function closeMenu(){ btn.classList.remove('active'); nav.classList.remove('open'); overlay.classList.remove('on'); }
-  btn.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
-    btn.classList.toggle('active', open);
-    overlay.classList.toggle('on', open);
-  });
-  overlay.addEventListener('click', closeMenu);
-  document.querySelectorAll('.nav-link').forEach(a => a.addEventListener('click', closeMenu));
+    <!-- In-browser JSX compiler -->
+    <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 
-  /* =========================================================
-   *  FAQ ACCORDION
-   * ========================================================= */
-  document.querySelectorAll('.faq-q').forEach(q => {
-    q.addEventListener('click', () => {
-      const item = q.parentElement;
-      const body = item.querySelector('.faq-body');
-      const isOpen = item.classList.contains('open');
-      // close all
-      document.querySelectorAll('.faq-item.open').forEach(i => {
-        i.classList.remove('open');
-        i.querySelector('.faq-body').style.maxHeight = '0';
+    <style>
+      body { background: #0F172A; }
+      #boot {
+        position: fixed; inset: 0; display: flex; flex-direction: column; gap: 14px;
+        align-items: center; justify-content: center; padding: 24px; text-align: center;
+        color: #475569; font: 500 11px/1.7 "JetBrains Mono", monospace;
+        letter-spacing: .22em; text-transform: uppercase;
+      }
+      #boot .err {
+        max-width: 640px; letter-spacing: 0; text-transform: none;
+        color: #f87171; font-size: 12px; word-break: break-word;
+      }
+    </style>
+
+    <!-- Surface any load/runtime failure on the boot screen instead of hanging -->
+    <script>
+      window.__bootFail = function (msg) {
+        var b = document.getElementById('boot');
+        if (!b) return;
+        b.innerHTML =
+          '<div>Startup failed</div>' +
+          '<div class="err">' + String(msg).replace(/</g, '&lt;') + '</div>' +
+          '<div class="err" style="color:#64748b">Open DevTools (F12) → Console for details. ' +
+          'This page needs internet access to esm.sh, unpkg.com and cdn.tailwindcss.com.</div>';
+      };
+      window.addEventListener('error', function (e) {
+        window.__bootFail(e.message || (e.target && e.target.src ? 'Failed to load: ' + e.target.src : 'Unknown error'));
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) {
+        window.__bootFail(e.reason && e.reason.message ? e.reason.message : e.reason);
       });
-      if (!isOpen) {
-        item.classList.add('open');
-        body.style.maxHeight = body.scrollHeight + 'px';
-      }
-    });
-  });
+    </script>
+  </head>
+  <body class="bg-abyss font-sans text-slate-300 antialiased">
+    <div id="root"><div id="boot">Compiling interface…</div></div>
 
-  /* =========================================================
-   *  COA TABLE
-   * ========================================================= */
-  const coaData = {
-    BPC157: [
-      ['Identity',          'ESI-MS',              'MW: 1419.5 Da',       '1419.56 Da', 'PASS'],
-      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '99.2%',      'PASS'],
-      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
-      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '91.4%',      'PASS'],
-      ['Water Content',     'Karl Fischer',        '≤10.0%',              '6.3%',       'PASS'],
-      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.04%',      'PASS'],
-      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
-      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
-    ],
-    TB500: [
-      ['Identity',          'ESI-MS',              'MW: 4963.5 Da',       '4963.48 Da', 'PASS'],
-      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '98.6%',      'PASS'],
-      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
-      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '88.7%',      'PASS'],
-      ['Water Content',     'Karl Fischer',        '≤10.0%',              '7.1%',       'PASS'],
-      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.06%',      'PASS'],
-      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
-      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
-    ],
-    CJC: [
-      ['Identity',          'ESI-MS',              'MW: 3647.3 Da',       '3647.29 Da', 'PASS'],
-      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '98.9%',      'PASS'],
-      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
-      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '89.2%',      'PASS'],
-      ['Water Content',     'Karl Fischer',        '≤10.0%',              '7.8%',       'PASS'],
-      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.05%',      'PASS'],
-      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
-      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
-    ],
-    IPA: [
-      ['Identity',          'ESI-MS',              'MW: 711.87 Da',       '711.86 Da',  'PASS'],
-      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '99.0%',      'PASS'],
-      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
-      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '90.1%',      'PASS'],
-      ['Water Content',     'Karl Fischer',        '≤10.0%',              '6.9%',       'PASS'],
-      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.03%',      'PASS'],
-      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
-      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
-    ],
-  };
+    <script type="text/babel" data-type="module" data-presets="react">
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { createRoot } from "react-dom/client";
+import * as THREE from "three";
+import { mergeVertices } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { ImprovedNoise } from "three/examples/jsm/math/ImprovedNoise.js";
+import { Canvas, useFrame } from "@react-three/fiber";
+import {
+  motion, AnimatePresence, MotionConfig,
+  useMotionValue, useSpring, useTransform, useInView, useReducedMotion,
+} from "framer-motion";
+import {
+  Brain as BrainIcon, Activity, ShieldCheck, ArrowUpRight, ArrowRight,
+  FileCheck2, ChevronDown, FlaskConical, HelpCircle, Mail, FileText,
+  BadgeCheck, Plus, Clock, MapPin, Send, Check,
+} from "lucide-react";
 
-  const coaDates = { BPC157:'2025-03-12', TB500:'2025-02-28', CJC:'2025-03-05', IPA:'2025-03-18' };
+/* ============ lib/motion.js ============ */
+// Single source of truth for the animation pipeline.
+// EASE is the curve pinned by the brief — a long, decelerating
+// "expo-out" that reads premium without inducing motion fatigue.
 
-  function renderCOA(key) {
-    const rows = coaData[key];
-    document.getElementById('coa-body').innerHTML = rows.map(
-      ([p,m,s,r,st]) => `
-        <tr>
-          <td>${p}</td>
-          <td style="color:var(--txt-3)">${m}</td>
-          <td>${s}</td>
-          <td class="coa-result">${r}</td>
-          <td class="coa-pass">${st}</td>
-        </tr>`
-    ).join('');
-    document.getElementById('coa-date').textContent = coaDates[key];
+const EASE = [0.16, 1, 0.3, 1]
+
+const VIEWPORT = { once: true, margin: '-90px' }
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 28 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.9, ease: EASE },
+  },
+}
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 1.1, ease: EASE } },
+}
+
+const stagger = (delay = 0.1, children = 0.09) => ({
+  hidden: {},
+  show: {
+    transition: { delayChildren: delay, staggerChildren: children },
+  },
+})
+
+// Physics for the slide-out navigation panel
+const PANEL_SPRING = { type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }
+
+// Micro-interaction spring for buttons / cards
+const TAP_SPRING = { type: 'spring', stiffness: 420, damping: 22 }
+
+
+/* ============ components/ui/Button.jsx ============ */
+const VARIANTS = {
+  primary:
+    'bg-signal text-slate-950 shadow-glow-sm hover:bg-signal-soft hover:shadow-glow',
+  ghost:
+    'border border-white/10 bg-white/[0.03] text-slate-200 hover:border-signal/50 hover:bg-signal/[0.07] hover:text-white',
+}
+
+/**
+ * Shared interactive control. Renders an <a> by default, or a <button>
+ * when `as="button"` is passed. Every instance carries the same spring
+ * micro-interaction so the whole page feels mechanically consistent.
+ */
+function Button({
+  as = 'a',
+  variant = 'primary',
+  className = '',
+  children,
+  ...props
+}) {
+  const Tag = as === 'button' ? motion.button : motion.a
+
+  return (
+    <Tag
+      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.97 }}
+      transition={TAP_SPRING}
+      className={`group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-lg px-6 py-3 font-display text-sm font-medium transition-colors duration-300 ${VARIANTS[variant]} ${className}`}
+      {...props}
+    >
+      {/* sheen sweep on hover */}
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+      />
+      <span className="relative z-10 inline-flex items-center gap-2">{children}</span>
+    </Tag>
+  )
+}
+
+
+/* ============ components/ui/SectionHeader.jsx ============ */
+function SectionHeader({ eyebrow, title, sub, align = 'left' }) {
+  const isCenter = align === 'center'
+
+  return (
+    <motion.div
+      variants={stagger(0, 0.1)}
+      initial="hidden"
+      whileInView="show"
+      viewport={VIEWPORT}
+      className={`max-w-2xl ${isCenter ? 'mx-auto text-center' : ''}`}
+    >
+      <motion.p
+        variants={fadeUp}
+        className={`mono-label flex items-center gap-3 ${isCenter ? 'justify-center' : ''}`}
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-signal shadow-glow-sm" aria-hidden="true" />
+        {eyebrow}
+      </motion.p>
+
+      <motion.h2
+        variants={fadeUp}
+        className="mt-5 font-display text-3xl font-semibold leading-tight text-slate-100 sm:text-4xl lg:text-[2.75rem]"
+      >
+        {title}
+      </motion.h2>
+
+      {sub && (
+        <motion.p variants={fadeUp} className="mt-5 text-base leading-relaxed text-slate-400">
+          {sub}
+        </motion.p>
+      )}
+    </motion.div>
+  )
+}
+
+
+/* ============ components/navigation/MenuToggle.jsx ============ */
+const SPRING = { type: 'spring', stiffness: 380, damping: 26 }
+
+// Lines span the full inner width, so no CSS-transform centering is
+// needed — Framer Motion owns the transform channel exclusively.
+const lineBase =
+  'absolute left-0 top-1/2 mt-[-1px] h-[1.5px] w-[18px] rounded-full bg-slate-200'
+
+function MenuToggle({ open, onToggle }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onToggle}
+      aria-label={open ? 'Close navigation' : 'Open navigation'}
+      aria-expanded={open}
+      whileHover={{ scale: 1.06 }}
+      whileTap={{ scale: 0.92 }}
+      transition={SPRING}
+      className="relative z-[70] flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] backdrop-blur-md transition-colors duration-300 hover:border-signal/50 hover:shadow-glow-sm"
+    >
+      <span className="relative block h-[18px] w-[18px]" aria-hidden="true">
+        <motion.span
+          className={lineBase}
+          initial={false}
+          animate={open ? { rotate: 45, y: 0 } : { rotate: 0, y: -6 }}
+          transition={SPRING}
+        />
+        <motion.span
+          className={lineBase}
+          initial={false}
+          animate={open ? { opacity: 0, scaleX: 0.4 } : { opacity: 1, scaleX: 1 }}
+          transition={{ duration: 0.18 }}
+        />
+        <motion.span
+          className={lineBase}
+          initial={false}
+          animate={open ? { rotate: -45, y: 0 } : { rotate: 0, y: 6 }}
+          transition={SPRING}
+        />
+      </span>
+    </motion.button>
+  )
+}
+
+
+/* ============ components/navigation/Navbar.jsx ============ */
+function LogoMark() {
+  return (
+    <a href="#top" className="group flex items-center gap-3" aria-label="SYNAPTIQ — home">
+      <svg viewBox="0 0 32 32" className="h-8 w-8" aria-hidden="true">
+        <rect width="32" height="32" rx="8" className="fill-well" />
+        <path
+          d="M16 6l8.5 5v10L16 26l-8.5-5V11L16 6z"
+          fill="none"
+          stroke="#06B6D4"
+          strokeWidth="1.6"
+          className="transition-all duration-300 group-hover:stroke-[#22D3EE]"
+        />
+        <circle cx="16" cy="16" r="3" fill="#06B6D4" />
+      </svg>
+      <span className="flex flex-col leading-none">
+        <span className="font-display text-sm font-bold tracking-[0.28em] text-slate-100">
+          SYNAPTIQ
+        </span>
+        <span className="mt-1 font-mono text-[9px] tracking-[0.3em] text-slate-500">
+          PRECISION PLATFORM
+        </span>
+      </span>
+    </a>
+  )
+}
+
+function Navbar({ open, onToggle }) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 28)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <motion.header
+      initial={{ y: -56, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.9, ease: EASE, delay: 0.15 }}
+      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-500 ${
+        scrolled
+          ? 'border-b border-white/[0.06] bg-abyss/75 backdrop-blur-xl'
+          : 'border-b border-transparent bg-transparent'
+      }`}
+    >
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8">
+        <LogoMark />
+
+        <div className="flex items-center gap-5">
+          <span className="mono-label hidden items-center gap-2 sm:flex">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal" />
+            </span>
+            Secure session
+          </span>
+          <MenuToggle open={open} onToggle={onToggle} />
+        </div>
+      </div>
+    </motion.header>
+  )
+}
+
+
+/* ============ components/navigation/SideMenu.jsx ============ */
+// Exactly four destinations, indexed because the menu is a fixed,
+// ordered map of the page — the number is the link's position on it.
+const LINKS = [
+  { index: '01', label: 'Products', href: '#products', icon: FlaskConical },
+  { index: '02', label: 'Certificates of Analysis', href: '#certificates', icon: FileCheck2 },
+  { index: '03', label: 'FAQ', href: '#faq', icon: HelpCircle },
+  { index: '04', label: 'Contact Us', href: '#contact', icon: Mail },
+]
+
+const listVariants = {
+  hidden: {},
+  show: { transition: { delayChildren: 0.18, staggerChildren: 0.07 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, x: 36 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.65, ease: EASE } },
+}
+
+function SideMenu({ onClose }) {
+  // Lock body scroll while the panel is open
+  useEffect(() => {
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [])
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+        onClick={onClose}
+        className="fixed inset-0 z-[55] bg-slate-950/60 backdrop-blur-[3px]"
+        aria-hidden="true"
+      />
+
+      <motion.aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site navigation"
+        initial={{ x: '104%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '104%' }}
+        transition={PANEL_SPRING}
+        className="fixed right-0 top-0 z-[60] flex h-full w-[min(420px,90vw)] flex-col border-l border-white/[0.08] bg-well/95 shadow-panel backdrop-blur-2xl"
+      >
+        <div className="flex items-center justify-between px-8 pb-6 pt-7">
+          <span className="mono-label">Navigation / 01 — 04</span>
+          <span className="h-px w-16 bg-gradient-to-r from-signal/60 to-transparent" />
+        </div>
+
+        <motion.nav
+          variants={listVariants}
+          initial="hidden"
+          animate="show"
+          className="flex-1 px-8"
+        >
+          <ul>
+            {LINKS.map(({ index, label, href, icon: Icon }) => (
+              <motion.li key={href} variants={itemVariants}>
+                <a
+                  href={href}
+                  onClick={onClose}
+                  className="group flex items-center gap-5 border-b border-white/[0.06] py-[26px] transition-colors duration-300 hover:border-signal/30"
+                >
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 transition-all duration-300 group-hover:border-signal/60 group-hover:bg-signal/10 group-hover:text-signal-soft group-hover:shadow-glow-sm">
+                    <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+
+                  <span className="flex flex-1 flex-col">
+                    <span className="font-display text-lg font-medium text-slate-200 transition-colors duration-300 group-hover:text-white">
+                      {label}
+                    </span>
+                    <span className="mt-0.5 font-mono text-[10px] tracking-[0.25em] text-slate-600">
+                      {index}
+                    </span>
+                  </span>
+
+                  <ArrowUpRight
+                    size={18}
+                    aria-hidden="true"
+                    className="text-slate-600 transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-signal-soft"
+                  />
+                </a>
+              </motion.li>
+            ))}
+          </ul>
+        </motion.nav>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.45 }}
+          className="border-t border-white/[0.06] px-8 py-6"
+        >
+          <div className="flex items-center justify-between">
+            <span className="mono-label flex items-center gap-2 normal-case tracking-normal">
+              <ShieldCheck size={14} className="text-signal" aria-hidden="true" />
+              support@synaptiq.bio
+            </span>
+            <span className="mono-label">EST. 2021</span>
+          </div>
+        </motion.div>
+      </motion.aside>
+    </>
+  )
+}
+
+
+/* ============ components/hero/Brain.jsx ============ */
+/* ------------------------------------------------------------------ */
+/*  Geometry — built once, on the CPU, at mount                        */
+/* ------------------------------------------------------------------ */
+
+// Ridged noise: turns smooth Perlin into connected gyri-like crests
+function ridge(noise, v, frequency, offset) {
+  const n = noise.noise(
+    v.x * frequency + offset,
+    v.y * frequency + offset * 0.31,
+    v.z * frequency,
+  )
+  return 1 - Math.min(1, Math.abs(n) * 1.9)
+}
+
+function buildHemisphere(side, noise) {
+  // mergeVertices → indexed geometry with shared verts → smooth normals
+  const geom = mergeVertices(new THREE.IcosahedronGeometry(1, 5))
+  const pos = geom.attributes.position
+  const v = new THREE.Vector3()
+
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i).normalize()
+
+    // 1 on the lateral (outer) face, 0 on the medial wall facing the fissure
+    const lateral = THREE.MathUtils.smoothstep(v.x * side, -0.6, 0.0)
+    let xScale = THREE.MathUtils.lerp(0.12, 0.6, lateral)
+
+    // the hemisphere narrows toward the frontal pole (+z)
+    xScale *= 1 - 0.16 * THREE.MathUtils.smoothstep(v.z, 0.25, 1.0)
+
+    const x = v.x * xScale
+    let y = v.y * 0.72
+    const z = v.z
+
+    // flatten the underside slightly (temporal base)
+    y *= 1 - 0.14 * THREE.MathUtils.smoothstep(-v.y, 0.15, 1.0)
+
+    // cortical folds — three octaves of ridged noise, offset per side
+    // so the two hemispheres are naturally asymmetric
+    const o = side * 9.73
+    const folds =
+      ridge(noise, v, 2.3, o) * 0.55 +
+      ridge(noise, v, 4.7, o + 11.3) * 0.33 +
+      ridge(noise, v, 8.2, o + 23.7) * 0.12
+    const swell = noise.noise(v.x * 1.1 + o, v.y * 1.1, v.z * 1.1)
+
+    const relief = 0.92 + folds * 0.16 + swell * 0.035
+    // suppress relief on the medial wall so the fissure stays a crisp seam
+    const r = THREE.MathUtils.lerp(0.965, relief, 0.2 + lateral * 0.8)
+
+    pos.setXYZ(i, x * r, y * r, z * r)
   }
-  renderCOA('BPC157');
-  document.getElementById('coa-select').addEventListener('change', e => renderCOA(e.target.value));
 
-  /* =========================================================
-   *  CONTACT FORM
-   * ========================================================= */
-  function handleForm(e) {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.textContent = 'Enquiry Sent ✓';
-    btn.style.background = 'linear-gradient(135deg,#00B372,#007352)';
-    btn.disabled = true;
-    setTimeout(() => {
-      btn.textContent = 'Send Enquiry →';
-      btn.style.background = '';
-      btn.disabled = false;
-    }, 4000);
+  geom.computeVertexNormals()
+  return geom
+}
+
+function buildCerebellum(noise) {
+  const geom = mergeVertices(new THREE.IcosahedronGeometry(1, 4))
+  const pos = geom.attributes.position
+  const v = new THREE.Vector3()
+
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i).normalize()
+    // folia: tight horizontal laminae
+    const folia =
+      1 - Math.min(1, Math.abs(noise.noise(v.x * 2.2, v.y * 16.0 + 53.1, v.z * 2.2)) * 1.9)
+    const swell = noise.noise(v.x * 2.6 + 7.7, v.y * 2.6, v.z * 2.6)
+    const r = 0.94 + folia * 0.085 + swell * 0.04
+    pos.setXYZ(i, v.x * 0.46 * r, v.y * 0.27 * r, v.z * 0.36 * r)
   }
 
-  /* =========================================================
-   *  SCROLL REVEAL
-   * ========================================================= */
-  const io = new IntersectionObserver((entries) => {
-    entries.forEach((en, i) => {
-      if (en.isIntersecting) {
-        setTimeout(() => en.target.classList.add('visible'), i * 60);
-        io.unobserve(en.target);
-      }
-    });
-  }, { threshold: 0.12 });
-  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  geom.computeVertexNormals()
+  return geom
+}
 
-  /* =========================================================
-   *  THREE.JS — BRAIN + LENS MAGNIFICATION
-   * ========================================================= */
-  (function initBrain() {
-    const heroEl   = document.getElementById('hero');
-    const brainCvs = document.getElementById('brain-canvas');
-    const lensCvs  = document.getElementById('lens-overlay');
-    const lensCtx  = lensCvs.getContext('2d');
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
 
-    /* — Renderer — */
-    const renderer = new THREE.WebGLRenderer({
-      canvas: brainCvs,
-      antialias: true,
-      alpha: true,
-      preserveDrawingBuffer: true   // Required for lens read-back
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x000000, 0);
+const NO_RAYCAST = () => null
 
-    /* — Scene / Camera — */
-    const scene  = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 1000);
-    camera.position.z = 5.2;
+function Brain({ onHoverChange }) {
+  const group = useRef()
+  const prefersReduced = useReducedMotion()
 
-    /* — Lights — */
-    scene.add(new THREE.AmbientLight(0x001a44, 0.8));
+  const geometries = useMemo(() => {
+    const noise = new ImprovedNoise()
+    return {
+      right: buildHemisphere(1, noise),
+      left: buildHemisphere(-1, noise),
+      cerebellum: buildCerebellum(noise),
+      stem: new THREE.CylinderGeometry(0.115, 0.16, 0.55, 28, 6),
+      // low-poly invisible hit-volume — keeps pointer raycasts cheap
+      proxy: new THREE.SphereGeometry(1, 24, 18),
+    }
+  }, [])
 
-    const light1 = new THREE.PointLight(0x00D4FF, 3.5, 18);
-    light1.position.set(4, 3, 3);
-    scene.add(light1);
+  const uniforms = useMemo(
+    () => ({
+      uPointer: { value: new THREE.Vector3(0, 0, 100) }, // world-space lens centre
+      uLens: { value: 0 }, //                              0 → off, 1 → fully engaged
+      uRadius: { value: 0.52 }, //                          lens footprint (world units)
+      uBulge: { value: 0.17 }, //                           local magnification amplitude
+      uAccent: { value: new THREE.Color('#22D3EE') },
+    }),
+    [],
+  )
 
-    const light2 = new THREE.PointLight(0x8B5CF6, 2.8, 16);
-    light2.position.set(-3, -2, 2);
-    scene.add(light2);
+  // MeshStandardMaterial patched with a localized "lens" displacement:
+  // vertices inside uRadius of the cursor's surface point are pushed
+  // outward along their normals (a true local scale-up of the mesh),
+  // while the fragment stage adds a cyan focus glow + fresnel rim.
+  const material = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({
+      color: '#9FB6CE',
+      roughness: 0.42,
+      metalness: 0.16,
+    })
 
-    const light3 = new THREE.PointLight(0x00FFA3, 1.8, 14);
-    light3.position.set(0, -4, -2);
-    scene.add(light3);
+    mat.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, uniforms)
 
-    const rimLight = new THREE.DirectionalLight(0x00D4FF, 0.6);
-    rimLight.position.set(-2, 1, -3);
-    scene.add(rimLight);
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+           uniform vec3 uPointer;
+           uniform float uLens;
+           uniform float uRadius;
+           uniform float uBulge;
+           varying float vLens;`,
+        )
+        .replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+           vec4 lensWorld = modelMatrix * vec4( transformed, 1.0 );
+           float lensDist = distance( lensWorld.xyz, uPointer );
+           float lensInfluence = ( 1.0 - smoothstep( uRadius * 0.12, uRadius, lensDist ) ) * uLens;
+           vLens = lensInfluence;
+           transformed += normal * lensInfluence * uBulge;`,
+        )
 
-    /* — Brain Geometry — */
-    function buildBrain() {
-      const geo = new THREE.SphereGeometry(1.62, 128, 128);
-      const pos = geo.attributes.position;
-
-      for (let i = 0; i < pos.count; i++) {
-        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
-        const len = Math.sqrt(x*x + y*y + z*z);
-        const nx = x/len, ny = y/len, nz = z/len;
-
-        /* Primary gyri — major cortical folds */
-        const gyri =
-          Math.sin(x*2.6+0.5) * Math.cos(y*2.1) * Math.sin(z*2.6+1.0) * 0.22 +
-          Math.sin(x*2.1+1.9) * Math.cos(y*2.6+0.8) * Math.sin(z*2.1-0.6) * 0.18;
-
-        /* Secondary sulci */
-        const sulci =
-          Math.sin(x*5.1+0.4) * Math.cos(y*4.6+1.1) * Math.sin(z*5.1) * 0.09 +
-          Math.sin(x*4.6-0.9) * Math.cos(y*5.1+0.5) * Math.sin(z*4.6+2.0) * 0.07;
-
-        /* Tertiary fine texture */
-        const micro =
-          Math.sin(x*9.5+1.4) * Math.cos(y*9.0) * Math.sin(z*9.5-1.2) * 0.035 +
-          Math.sin(x*10.5) * Math.cos(y*10.0+2.4) * Math.sin(z*10.5+0.8) * 0.025;
-
-        /* Medial longitudinal fissure */
-        const fissure = -Math.exp(-(x*x)/0.055) * 0.38 * Math.max(0, 1 - Math.abs(y)*1.1);
-
-        /* Brainstem taper */
-        const stem = ny < -0.62 ? (ny+0.62) * 0.65 : 0;
-
-        /* Crown cap */
-        const crown = Math.max(0, ny - 0.75) * 0.28;
-
-        const d = gyri + sulci + micro + fissure + stem - crown;
-
-        pos.setXYZ(i,
-          x + nx * d * 1.15,
-          y + ny * d * 0.9  + stem * 0.3,
-          z + nz * d
-        );
-      }
-      pos.needsUpdate = true;
-      geo.computeVertexNormals();
-      return geo;
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          '#include <common>',
+          `#include <common>
+           uniform vec3 uAccent;
+           varying float vLens;`,
+        )
+        .replace(
+          '#include <emissivemap_fragment>',
+          `#include <emissivemap_fragment>
+           float lensFresnel = pow( 1.0 - saturate( dot( normalize( normal ), normalize( vViewPosition ) ) ), 2.6 );
+           totalEmissiveRadiance += uAccent * ( lensFresnel * 0.16 + vLens * 0.7 );`,
+        )
     }
 
-    const brainGeo = buildBrain();
+    mat.customProgramCacheKey = () => 'synaptiq-cortex-lens'
+    return mat
+  }, [uniforms])
 
-    /* Solid brain mesh */
-    const brainMat = new THREE.MeshPhongMaterial({
-      color:     0x061828,
-      emissive:  0x00263D,
-      specular:  0x00CCFF,
-      shininess: 130,
-    });
-    const brainMesh = new THREE.Mesh(brainGeo, brainMat);
-    scene.add(brainMesh);
+  // GPU/CPU hygiene on unmount
+  useEffect(
+    () => () => {
+      Object.values(geometries).forEach((g) => g.dispose())
+      material.dispose()
+    },
+    [geometries, material],
+  )
 
-    /* Wireframe overlay */
-    const wfGeo = new THREE.WireframeGeometry(brainGeo);
-    const wfMat = new THREE.LineBasicMaterial({
-      color: 0x00D4FF, transparent: true, opacity: 0.055
-    });
-    const wireframe = new THREE.LineSegments(wfGeo, wfMat);
-    scene.add(wireframe);
+  // Pointer state lives in a ref → zero React re-renders per mousemove
+  const lens = useRef({ target: new THREE.Vector3(0, 0, 100), strength: 0 })
 
-    /* Outer glow shell */
-    const outerGeo = new THREE.SphereGeometry(1.9, 32, 32);
-    const outerMat = new THREE.MeshBasicMaterial({
-      color: 0x004466, transparent: true, opacity: 0.045,
-      side: THREE.BackSide
-    });
-    const outer = new THREE.Mesh(outerGeo, outerMat);
-    scene.add(outer);
+  const handleMove = (e) => lens.current.target.copy(e.point)
+  const handleOver = () => {
+    lens.current.strength = 1
+    onHoverChange?.(true)
+  }
+  const handleOut = () => {
+    lens.current.strength = 0
+    onHoverChange?.(false)
+  }
 
-    /* Secondary inner glow */
-    const innerGeo = new THREE.SphereGeometry(1.72, 32, 32);
-    const innerMat = new THREE.MeshBasicMaterial({
-      color: 0x00D4FF, transparent: true, opacity: 0.03,
-      side: THREE.BackSide
-    });
-    scene.add(new THREE.Mesh(innerGeo, innerMat));
+  useFrame(({ clock, pointer }, delta) => {
+    const dt = Math.min(delta, 1 / 30)
 
-    /* — Neural Particles — */
-    const N = 500;
-    const pPositions = new Float32Array(N * 3);
-    for (let i = 0; i < N; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi   = Math.acos(2 * Math.random() - 1);
-      const r     = 2.3 + Math.random() * 3.2;
-      pPositions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
-      pPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-      pPositions[i*3+2] = r * Math.cos(phi);
-    }
-    const pGeo = new THREE.BufferGeometry();
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-    const pMat = new THREE.PointsMaterial({
-      color: 0x00D4FF, size: 0.022,
-      transparent: true, opacity: 0.55, sizeAttenuation: true
-    });
-    const particles = new THREE.Points(pGeo, pMat);
-    scene.add(particles);
+    // frame-rate-independent critical damping
+    uniforms.uPointer.value.lerp(lens.current.target, 1 - Math.exp(-dt * 14))
+    uniforms.uLens.value += (lens.current.strength - uniforms.uLens.value) * (1 - Math.exp(-dt * 9))
 
-    /* Synapse lines */
-    const linePalette = [0x00D4FF, 0x8B5CF6, 0x00FFA3];
-    let lineCount = 0;
-    for (let i = 0; i < N && lineCount < 70; i++) {
-      for (let j = i+1; j < N && lineCount < 70; j++) {
-        const dx = pPositions[i*3]-pPositions[j*3];
-        const dy = pPositions[i*3+1]-pPositions[j*3+1];
-        const dz = pPositions[i*3+2]-pPositions[j*3+2];
-        if (Math.sqrt(dx*dx+dy*dy+dz*dz) < 2.8) {
-          const pts = [
-            new THREE.Vector3(pPositions[i*3], pPositions[i*3+1], pPositions[i*3+2]),
-            new THREE.Vector3(pPositions[j*3], pPositions[j*3+1], pPositions[j*3+2]),
-          ];
-          const lg = new THREE.BufferGeometry().setFromPoints(pts);
-          const lm = new THREE.LineBasicMaterial({
-            color: linePalette[lineCount % 3],
-            transparent: true, opacity: 0.12
-          });
-          scene.add(new THREE.Line(lg, lm));
-          lineCount++;
-        }
-      }
-    }
+    const g = group.current
+    if (!g) return
 
-    /* — Lens Magnification — */
-    const LENS_R = 82;
-    const ZOOM   = 1.95;
-    let   mx = -9999, my = -9999, hovering = false;
+    const t = clock.elapsedTime
+    const amp = prefersReduced ? 0 : 1
 
-    brainCvs.addEventListener('mousemove', e => {
-      const rc = brainCvs.getBoundingClientRect();
-      mx = e.clientX - rc.left;
-      my = e.clientY - rc.top;
-      hovering = true;
-    });
-    brainCvs.addEventListener('mouseleave', () => { hovering = false; });
+    // ambient drift + gentle cursor parallax, both damped
+    const targetY = -0.42 + Math.sin(t * 0.22) * 0.15 * amp + pointer.x * 0.2 * amp
+    const targetX = 0.12 + Math.cos(t * 0.17) * 0.06 * amp - pointer.y * 0.14 * amp
+    const k = 1 - Math.exp(-dt * 4)
+    g.rotation.y += (targetY - g.rotation.y) * k
+    g.rotation.x += (targetX - g.rotation.x) * k
+    g.position.y = Math.sin(t * 0.55) * 0.045 * amp
+  })
 
-    function drawLens() {
-      lensCtx.clearRect(0, 0, lensCvs.width, lensCvs.height);
-      if (!hovering) return;
+  return (
+    <group ref={group} scale={1.18} rotation={[0.12, -0.42, 0]}>
+      <mesh geometry={geometries.right} material={material} position={[0.125, 0, 0]} raycast={NO_RAYCAST} />
+      <mesh geometry={geometries.left} material={material} position={[-0.125, 0, 0]} raycast={NO_RAYCAST} />
+      <mesh
+        geometry={geometries.cerebellum}
+        material={material}
+        position={[0, -0.42, -0.66]}
+        raycast={NO_RAYCAST}
+      />
+      <mesh
+        geometry={geometries.stem}
+        material={material}
+        position={[0, -0.52, -0.22]}
+        rotation={[0.45, 0, 0]}
+        raycast={NO_RAYCAST}
+      />
 
-      const srcX = mx - LENS_R / ZOOM;
-      const srcY = my - LENS_R / ZOOM;
-      const srcW = (LENS_R * 2) / ZOOM;
-      const srcH = (LENS_R * 2) / ZOOM;
-      const dstX = mx - LENS_R;
-      const dstY = my - LENS_R;
+      {/* Invisible ellipsoid hit-volume: receives all pointer events.
+          three's Raycaster ignores `visible`, so events still fire,
+          but per-move intersection cost stays O(hundreds of tris). */}
+      <mesh
+        geometry={geometries.proxy}
+        visible={false}
+        scale={[0.78, 0.82, 1.12]}
+        position={[0, -0.04, -0.05]}
+        onPointerMove={handleMove}
+        onPointerOver={handleOver}
+        onPointerOut={handleOut}
+      />
+    </group>
+  )
+}
 
-      lensCtx.save();
-      lensCtx.beginPath();
-      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
-      lensCtx.clip();
-      try {
-        lensCtx.drawImage(renderer.domElement, srcX, srcY, srcW, srcH,
-                          dstX, dstY, LENS_R*2, LENS_R*2);
-      } catch(_) {}
-      lensCtx.restore();
 
-      /* Glowing ring border */
-      const grad = lensCtx.createRadialGradient(mx, my, LENS_R-4, mx, my, LENS_R+4);
-      grad.addColorStop(0, 'rgba(0,212,255,1)');
-      grad.addColorStop(1, 'rgba(0,212,255,0)');
-      lensCtx.beginPath();
-      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
-      lensCtx.strokeStyle = grad;
-      lensCtx.lineWidth = 2.5;
-      lensCtx.stroke();
+/* ============ components/hero/BrainCanvas.jsx ============ */
+/**
+ * Canvas wrapper for the cortex model.
+ *
+ * Performance contract:
+ *  - `frameloop` is switched to "never" the moment the hero scrolls out of
+ *    view, so the GPU does zero work while the user reads the page below.
+ *  - Device pixel ratio is clamped to 1.8 — retina-sharp without paying
+ *    the 3x fill-rate tax on high-density mobile screens.
+ */
+function BrainCanvas({ onHoverChange }) {
+  const wrapRef = useRef(null)
+  const inView = useInView(wrapRef, { margin: '120px' })
 
-      /* Subtle inner tint */
-      lensCtx.beginPath();
-      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
-      const ig = lensCtx.createRadialGradient(mx, my, 0, mx, my, LENS_R);
-      ig.addColorStop(0, 'rgba(0,212,255,.015)');
-      ig.addColorStop(1, 'rgba(0,212,255,.075)');
-      lensCtx.fillStyle = ig;
-      lensCtx.fill();
-    }
+  return (
+    <div ref={wrapRef} className="absolute inset-0">
+      <Canvas
+        frameloop={inView ? 'always' : 'never'}
+        dpr={[1, 1.8]}
+        camera={{ position: [0, 0.12, 3.6], fov: 42 }}
+        gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      >
+        {/* Cool laboratory key/rim/fill rig */}
+        <ambientLight intensity={0.55} color="#94A8C8" />
+        <directionalLight position={[3, 4, 2.5]} intensity={1.25} color="#E2ECFF" />
+        <directionalLight position={[-3.5, -0.5, -4]} intensity={2.4} color="#06B6D4" />
+        <directionalLight position={[0, -3, 2]} intensity={0.3} color="#64748B" />
 
-    /* — Resize — */
-    function resize() {
-      const w = window.innerWidth, h = window.innerHeight;
-      renderer.setSize(w, h);
-      lensCvs.width  = w;  lensCvs.height  = h;
-      camera.aspect  = w / h;
-      camera.updateProjectionMatrix();
-    }
-    window.addEventListener('resize', resize);
-    resize();
+        <Brain onHoverChange={onHoverChange} />
+      </Canvas>
+    </div>
+  )
+}
 
-    /* — Animate — */
-    let tick = 0;
-    function animate() {
-      requestAnimationFrame(animate);
-      tick++;
 
-      const t = tick * 0.006;
-      const pulse = Math.sin(t * 2.1) * 0.5 + 0.5;
+/* ============ components/hero/LensCursor.jsx ============ */
+/**
+ * DOM half of the magnifier. The shader inside Brain.jsx bulges the mesh
+ * surface; this overlay supplies the optical instrument the user "holds":
+ * a circular lens that brightens and slightly enlarges everything beneath
+ * it via backdrop-filter, ringed with measurement ticks.
+ *
+ * Architecture notes:
+ *  - `mx` / `my` are MotionValues owned by Hero (set in onPointerMove with
+ *    zero React re-renders). We chase them with stiff springs so the lens
+ *    has believable mass without lagging the cursor.
+ *  - Centering uses negative margins instead of translate(-50%,-50%)
+ *    because Framer Motion owns the transform channel on these nodes.
+ *  - Hidden entirely on coarse pointers — there is no cursor to magnify
+ *    under on touch devices.
+ */
+function LensCursor({ mx, my, active }) {
+  // Position springs — tight follow, slight overshoot
+  const x = useSpring(mx, { stiffness: 520, damping: 42, mass: 0.5 })
+  const y = useSpring(my, { stiffness: 520, damping: 42, mass: 0.5 })
 
-      /* Gentle sway */
-      brainMesh.rotation.y  = Math.sin(t * 0.32) * 0.38 + t * 0.055;
-      brainMesh.rotation.x  = Math.sin(t * 0.21) * 0.095;
-      wireframe.rotation.y  = brainMesh.rotation.y;
-      wireframe.rotation.x  = brainMesh.rotation.x;
-      outer.rotation.y      = brainMesh.rotation.y * 0.4;
+  // Presence spring — 0 when off the model, 1 while hovering it
+  const presence = useSpring(active, { stiffness: 240, damping: 22 })
+  const scale = useTransform(presence, [0, 1], [0.55, 1])
+  const opacity = presence
 
-      /* Pulsing glow */
-      outerMat.opacity = 0.03 + pulse * 0.045;
+  return (
+    <motion.div
+      aria-hidden="true"
+      style={{ x, y }}
+      className="pointer-events-none absolute left-0 top-0 z-20 hidden [@media(pointer:fine)]:block"
+    >
+      {/* 112px lens, centered on the pointer via negative margins */}
+      <div className="-ml-14 -mt-14 h-28 w-28">
+        <motion.div style={{ scale, opacity }} className="relative h-full w-full">
+          {/* Optical disc — brightens + enlarges the pixels beneath it */}
+          <div
+            className="absolute inset-0 rounded-full border border-signal-soft/80 shadow-glow"
+            style={{
+              backdropFilter: 'brightness(1.28) contrast(1.06)',
+              WebkitBackdropFilter: 'brightness(1.28) contrast(1.06)',
+              background:
+                'radial-gradient(circle, rgba(34,211,238,0.06) 55%, rgba(34,211,238,0.14) 78%, transparent 80%)',
+            }}
+          />
 
-      /* Emissive breathe */
-      const ev = pulse * 0.18;
-      brainMat.emissive.setRGB(0, ev * 0.14, ev * 0.28);
+          {/* Dashed instrument ring */}
+          <div className="absolute -inset-2 animate-[spin_14s_linear_infinite] rounded-full border border-dashed border-signal/35" />
 
-      /* Orbit lights */
-      light1.position.set(
-        Math.sin(t * 0.62) * 4.2,
-        Math.cos(t * 0.44) * 3,
-        3
-      );
-      light2.position.set(
-        Math.cos(t * 0.58) * 3.2,
-        -2,
-        Math.sin(t * 0.72) * 3
-      );
+          {/* Measurement ticks at the cardinal points */}
+          <span className="absolute left-1/2 top-0 h-2 w-px -translate-x-1/2 bg-signal-soft" />
+          <span className="absolute bottom-0 left-1/2 h-2 w-px -translate-x-1/2 bg-signal-soft" />
+          <span className="absolute left-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal-soft" />
+          <span className="absolute right-0 top-1/2 h-px w-2 -translate-y-1/2 bg-signal-soft" />
 
-      /* Particle drift */
-      particles.rotation.y = t * 0.07;
-      particles.rotation.x = t * 0.025;
+          {/* Crosshair */}
+          <span className="absolute left-1/2 top-1/2 h-3 w-px -translate-x-1/2 -translate-y-1/2 bg-signal-soft/70" />
+          <span className="absolute left-1/2 top-1/2 h-px w-3 -translate-x-1/2 -translate-y-1/2 bg-signal-soft/70" />
 
-      renderer.render(scene, camera);
-      drawLens();
-    }
-    animate();
+          {/* Readout */}
+          <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] tracking-lab text-signal-soft">
+            MAG ×1.6
+          </span>
+        </motion.div>
+      </div>
+    </motion.div>
+  )
+}
 
-  })(); // end initBrain
-  </script>
-</body>
+
+/* ============ components/hero/Hero.jsx ============ */
+const STATS = [
+  { value: '14', label: 'ISO/IEC 17025 lab partners' },
+  { value: '100%', label: 'Batch documentation public' },
+  { value: '<24h', label: 'QC release to dispatch' },
+]
+
+function Hero() {
+  // Pointer position relative to the 3D stage — MotionValues, not state,
+  // so mousemove never triggers a React render.
+  const mx = useMotionValue(0)
+  const my = useMotionValue(0)
+  const lensOn = useMotionValue(0)
+  const stageRef = useRef(null)
+
+  const handlePointerMove = (e) => {
+    const rect = stageRef.current?.getBoundingClientRect()
+    if (!rect) return
+    mx.set(e.clientX - rect.left)
+    my.set(e.clientY - rect.top)
+  }
+
+  // Brain.jsx reports when the raycaster enters/leaves the cortex proxy.
+  const handleHoverChange = useCallback((hovering) => {
+    lensOn.set(hovering ? 1 : 0)
+    if (stageRef.current) stageRef.current.style.cursor = hovering ? 'none' : 'auto'
+  }, [lensOn])
+
+  return (
+    <section id="top" className="relative flex min-h-[100svh] items-center overflow-hidden">
+      {/* Layered laboratory backdrop */}
+      <div className="lab-grid absolute inset-0" aria-hidden="true" />
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{
+          background:
+            'radial-gradient(820px 540px at 72% 42%, rgba(6,182,212,0.13), transparent 64%), radial-gradient(640px 420px at 12% 88%, rgba(14,116,144,0.10), transparent 60%)',
+        }}
+      />
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(15,23,42,0.55), transparent 28%, transparent 68%, #0F172A 100%)',
+        }}
+      />
+
+      <div className="relative z-10 mx-auto grid w-full max-w-7xl items-center gap-14 px-6 pb-24 pt-36 lg:grid-cols-[1.02fr_1fr] lg:gap-6 lg:pt-28">
+        {/* ----------------------------------------------------------- copy */}
+        <motion.div variants={stagger(0.15, 0.12)} initial="hidden" animate="show">
+          <motion.p
+            variants={fadeUp}
+            className="inline-flex items-center gap-3 rounded-full border border-signal/25 bg-signal/[0.06] px-4 py-2 font-mono text-[11px] uppercase tracking-lab text-signal-soft"
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal" />
+            </span>
+            Verified cognitive research supply
+          </motion.p>
+
+          <motion.h1
+            variants={fadeUp}
+            className="mt-7 font-display text-[2.6rem] font-semibold leading-[1.06] tracking-tight text-slate-100 sm:text-6xl"
+          >
+            Precision instruments for{' '}
+            <span className="bg-gradient-to-r from-signal-soft via-signal to-signal-deep bg-clip-text text-transparent">
+              cognitive performance.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            variants={fadeUp}
+            className="mt-6 max-w-xl text-base leading-relaxed text-slate-400 sm:text-lg"
+          >
+            Every formulation is produced in audited facilities, sequenced into traceable
+            batches, and released only after independent third-party analysis. The data is
+            published. The chain of custody is yours to inspect.
+          </motion.p>
+
+          <motion.div variants={fadeUp} className="mt-9 flex flex-wrap items-center gap-4">
+            <Button href="#products">
+              Explore products
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+            </Button>
+            <Button href="#certificates" variant="ghost">
+              <FileCheck2 className="h-4 w-4" />
+              Certificates of Analysis
+            </Button>
+          </motion.div>
+
+          {/* Hairline metrics strip */}
+          <motion.dl
+            variants={fadeUp}
+            className="mt-14 grid max-w-xl grid-cols-3 divide-x divide-white/[0.07] border-y hairline py-6"
+          >
+            {STATS.map((s) => (
+              <div key={s.label} className="px-4 first:pl-0 last:pr-0">
+                <dt className="sr-only">{s.label}</dt>
+                <dd className="font-display text-2xl font-semibold text-slate-100 sm:text-[1.7rem]">
+                  {s.value}
+                </dd>
+                <dd className="mt-2 font-mono text-[10px] uppercase tracking-lab text-slate-500">
+                  {s.label}
+                </dd>
+              </div>
+            ))}
+          </motion.dl>
+        </motion.div>
+
+        {/* ------------------------------------------------------ 3D stage */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.4, ease: EASE, delay: 0.35 }}
+          className="relative"
+        >
+          <div
+            ref={stageRef}
+            onPointerMove={handlePointerMove}
+            className="relative h-[460px] w-full sm:h-[560px]"
+          >
+            <BrainCanvas onHoverChange={handleHoverChange} />
+            <LensCursor mx={mx} my={my} active={lensOn} />
+
+            {/* Specimen-stage corner brackets */}
+            <span className="pointer-events-none absolute left-2 top-2 h-6 w-6 border-l border-t border-signal/40" />
+            <span className="pointer-events-none absolute right-2 top-2 h-6 w-6 border-r border-t border-signal/40" />
+            <span className="pointer-events-none absolute bottom-2 left-2 h-6 w-6 border-b border-l border-signal/40" />
+            <span className="pointer-events-none absolute bottom-2 right-2 h-6 w-6 border-b border-r border-signal/40" />
+
+            {/* HUD chips */}
+            <div className="pointer-events-none absolute left-4 top-4 flex flex-col gap-2">
+              <span className="rounded border border-white/[0.07] bg-well/70 px-2.5 py-1.5 font-mono text-[10px] tracking-lab text-slate-500 backdrop-blur-sm">
+                MODEL C-09 · CORTEX MESH
+              </span>
+            </div>
+            <div className="pointer-events-none absolute right-4 top-4">
+              <span className="rounded border border-white/[0.07] bg-well/70 px-2.5 py-1.5 font-mono text-[10px] tracking-lab text-slate-500 backdrop-blur-sm">
+                VERTS 23,046
+              </span>
+            </div>
+
+            {/* Grounding shadow */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute bottom-6 left-1/2 h-10 w-64 -translate-x-1/2 rounded-[100%] bg-black/50 blur-2xl"
+            />
+
+            <p className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap font-mono text-[10px] uppercase tracking-lab text-slate-500">
+              Interactive — hover to magnify
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Scroll cue */}
+      <motion.a
+        href="#products"
+        aria-label="Scroll to products"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.6, duration: 1 }}
+        className="absolute bottom-7 left-1/2 z-10 hidden -translate-x-1/2 text-slate-600 transition-colors hover:text-signal-soft lg:block"
+      >
+        <motion.span
+          animate={{ y: [0, 7, 0] }}
+          transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+          className="block"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </motion.span>
+      </motion.a>
+    </section>
+  )
+}
+
+
+/* ============ components/sections/Products.jsx ============ */
+const PRODUCTS = [
+  {
+    icon: BrainIcon,
+    series: 'Series A',
+    name: 'Focus Architecture',
+    spec: 'BATCH-TESTED · 60 UNITS · GMP',
+    body: 'A daytime stack engineered around sustained attention — no peaks, no crash curve. Each lot ships with its full analytical panel.',
+  },
+  {
+    icon: Activity,
+    series: 'Series B',
+    name: 'Recovery Matrix',
+    spec: 'BATCH-TESTED · 90 UNITS · GMP',
+    body: 'Evening formulation supporting sleep architecture and next-day baseline. Heavy-metal and microbial screens published per batch.',
+  },
+  {
+    icon: ShieldCheck,
+    series: 'Series C',
+    name: 'Resilience Stack',
+    spec: 'BATCH-TESTED · 60 UNITS · GMP',
+    body: 'Adaptogenic support for high-load periods. Identity-verified raw inputs with certificates traceable to source lots.',
+  },
+]
+
+function Products() {
+  return (
+    <section id="products" className="relative scroll-mt-24 py-28 sm:py-36">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHeader
+          eyebrow="Catalog"
+          title="Engineered series, documented end to end."
+          sub="Three core lines. Every claim on the label maps to a line item on an independent lab report — nothing is sold that hasn't been measured."
+        />
+
+        <motion.div
+          variants={stagger(0.1, 0.14)}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mt-16 grid gap-6 md:grid-cols-3"
+        >
+          {PRODUCTS.map((p) => (
+            <motion.article
+              key={p.name}
+              variants={fadeUp}
+              whileHover={{ y: -6 }}
+              transition={TAP_SPRING}
+              className="group glass-panel relative flex flex-col p-7 transition-colors duration-300 hover:border-signal/30"
+            >
+              {/* Top row: icon + series tag */}
+              <div className="flex items-start justify-between">
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-signal/25 bg-signal/[0.07] text-signal-soft transition-shadow duration-300 group-hover:shadow-glow-sm">
+                  <p.icon className="h-5 w-5" strokeWidth={1.6} />
+                </span>
+                <span className="mono-label">{p.series}</span>
+              </div>
+
+              <h3 className="mt-6 font-display text-xl font-semibold text-slate-100">
+                {p.name}
+              </h3>
+
+              <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-400">{p.body}</p>
+
+              <p className="mt-6 font-mono text-[10px] tracking-lab text-slate-500">{p.spec}</p>
+
+              <a
+                href="#certificates"
+                className="mt-5 inline-flex items-center gap-1.5 border-t hairline pt-5 font-display text-sm font-medium text-slate-300 transition-colors duration-200 hover:text-signal-soft"
+              >
+                View specification
+                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </a>
+            </motion.article>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+
+/* ============ components/sections/Certificates.jsx ============ */
+const BATCHES = [
+  { id: 'BX-2491', product: 'Series A — Focus', lab: 'Ardent Analytics', date: '2026-05-22' },
+  { id: 'BX-2487', product: 'Series B — Recovery', lab: 'Meridian Labs', date: '2026-05-14' },
+  { id: 'BX-2480', product: 'Series C — Resilience', lab: 'Ardent Analytics', date: '2026-05-02' },
+  { id: 'BX-2474', product: 'Series A — Focus', lab: 'Helix Verification', date: '2026-04-19' },
+]
+
+function Certificates() {
+  return (
+    <section id="certificates" className="relative scroll-mt-24 bg-well/50 py-28 sm:py-36">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHeader
+          eyebrow="Verification"
+          title="Certificates of Analysis, public by default."
+          sub="Search any batch number printed on your packaging. Identity, potency, heavy metals, and microbial panels — signed by the issuing laboratory."
+        />
+
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="glass-panel mt-16 overflow-hidden"
+        >
+          {/* Table header */}
+          <div className="hidden grid-cols-[1fr_1.4fr_1.2fr_0.9fr_1fr] gap-4 border-b hairline px-7 py-4 sm:grid">
+            {['Batch ID', 'Product', 'Issuing lab', 'Date', 'Status'].map((h) => (
+              <span key={h} className="mono-label">
+                {h}
+              </span>
+            ))}
+          </div>
+
+          <motion.ul variants={stagger(0.05, 0.08)} initial="hidden" whileInView="show" viewport={VIEWPORT}>
+            {BATCHES.map((b) => (
+              <motion.li
+                key={b.id}
+                variants={fadeUp}
+                className="grid grid-cols-2 gap-x-4 gap-y-2 border-b hairline px-7 py-5 transition-colors duration-200 last:border-b-0 hover:bg-white/[0.02] sm:grid-cols-[1fr_1.4fr_1.2fr_0.9fr_1fr] sm:items-center"
+              >
+                <span className="font-mono text-sm text-signal-soft">{b.id}</span>
+                <span className="text-sm text-slate-200">{b.product}</span>
+                <span className="text-sm text-slate-400">{b.lab}</span>
+                <span className="font-mono text-xs text-slate-500">{b.date}</span>
+                <span className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-signal/30 bg-signal/[0.08] px-2.5 py-1 font-mono text-[10px] tracking-lab text-signal-soft">
+                    <BadgeCheck className="h-3 w-3" />
+                    VERIFIED
+                  </span>
+                  <a
+                    href="#certificates"
+                    aria-label={`Download report for batch ${b.id}`}
+                    className="inline-flex items-center gap-1 rounded border border-white/10 px-2 py-1 font-mono text-[10px] tracking-lab text-slate-400 transition-colors duration-200 hover:border-signal/40 hover:text-signal-soft"
+                  >
+                    <FileText className="h-3 w-3" />
+                    PDF
+                  </a>
+                </span>
+              </motion.li>
+            ))}
+          </motion.ul>
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mt-8 flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center"
+        >
+          <p className="font-mono text-[10px] uppercase tracking-lab text-slate-500">
+            All batches published within 72h of QC release
+          </p>
+          <Button href="#contact" variant="ghost">
+            Request full archive
+          </Button>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+
+/* ============ components/sections/Faq.jsx ============ */
+const FAQS = [
+  {
+    q: 'How do I verify the batch I received?',
+    a: 'Every unit carries a batch ID on the base of the packaging. Enter it in the Certificates of Analysis registry above to retrieve the signed laboratory report — identity, potency, heavy metals, and microbial panels — issued before the lot was released.',
+  },
+  {
+    q: 'Which payment methods do you support?',
+    a: 'We accept PayPal, major credit and debit cards (Visa, Mastercard) processed under PCI-DSS Level 1 with 3-D Secure 2.0, and on-chain payments in Bitcoin and Ethereum. Crypto checkout is non-custodial: you pay from your own wallet to a single-use address.',
+  },
+  {
+    q: 'How is shipping handled?',
+    a: 'Orders clear quality-control dispatch within 24 hours on business days. Domestic deliveries typically arrive in 2–4 days and international in 5–10, with tracked, temperature-stable packaging throughout.',
+  },
+  {
+    q: 'Can I access the raw laboratory documentation?',
+    a: 'Yes. Beyond the per-batch PDF reports, the full historical archive — including chromatograms and the issuing labs\u2019 accreditation scope — is available on request through the contact channel below.',
+  },
+]
+
+function FaqItem({ item, open, onToggle, index }) {
+  const panelId = `faq-panel-${index}`
+  const buttonId = `faq-button-${index}`
+
+  return (
+    <motion.li variants={fadeUp} className="glass-panel overflow-hidden">
+      <button
+        id={buttonId}
+        aria-expanded={open}
+        aria-controls={panelId}
+        onClick={onToggle}
+        className="flex w-full items-center justify-between gap-6 px-7 py-6 text-left"
+      >
+        <span className="font-display text-base font-medium text-slate-100 sm:text-lg">
+          {item.q}
+        </span>
+        <motion.span
+          animate={{ rotate: open ? 45 : 0 }}
+          transition={{ duration: 0.35, ease: EASE }}
+          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors duration-300 ${
+            open
+              ? 'border-signal/50 bg-signal/10 text-signal-soft'
+              : 'border-white/10 text-slate-400'
+          }`}
+        >
+          <Plus className="h-4 w-4" />
+        </motion.span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            id={panelId}
+            role="region"
+            aria-labelledby={buttonId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className="overflow-hidden"
+          >
+            <p className="border-t hairline px-7 pb-7 pt-5 text-sm leading-relaxed text-slate-400">
+              {item.a}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.li>
+  )
+}
+
+function Faq() {
+  const [openIndex, setOpenIndex] = useState(0)
+
+  return (
+    <section id="faq" className="relative scroll-mt-24 py-28 sm:py-36">
+      <div className="mx-auto max-w-4xl px-6">
+        <SectionHeader
+          align="center"
+          eyebrow="Protocol"
+          title="Frequently asked questions."
+        />
+
+        <motion.ul
+          variants={stagger(0.1, 0.1)}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mt-14 space-y-4"
+        >
+          {FAQS.map((item, i) => (
+            <FaqItem
+              key={item.q}
+              item={item}
+              index={i}
+              open={openIndex === i}
+              onToggle={() => setOpenIndex(openIndex === i ? -1 : i)}
+            />
+          ))}
+        </motion.ul>
+      </div>
+    </section>
+  )
+}
+
+
+/* ============ components/sections/Payments.jsx ============ */
+/* ----------------------------------------------------------------------
+ * Duotone payment marks.
+ * Rendered as on-palette abstractions (slate + signal) rather than
+ * official brand artwork — swap for licensed SVG assets in production.
+ * -------------------------------------------------------------------- */
+
+function PayPalMark() {
+  return (
+    <span className="relative inline-flex h-10 w-10 items-center justify-center">
+      <span className="absolute font-display text-2xl font-bold italic text-slate-500 -translate-x-[3px]">
+        P
+      </span>
+      <span className="absolute font-display text-2xl font-bold italic text-signal-soft translate-x-[3px]">
+        P
+      </span>
+    </span>
+  )
+}
+
+function VisaMark() {
+  return (
+    <span className="inline-flex h-10 items-center rounded-md border border-white/10 bg-white/[0.04] px-3 font-display text-sm font-bold italic tracking-wider text-slate-300">
+      VISA
+    </span>
+  )
+}
+
+function MastercardMark() {
+  return (
+    <span className="inline-flex h-10 items-center rounded-md border border-white/10 bg-white/[0.04] px-3">
+      <span className="relative flex items-center">
+        <span className="h-5 w-5 rounded-full bg-slate-500/80" />
+        <span className="-ml-2 h-5 w-5 rounded-full bg-signal/80 mix-blend-screen" />
+      </span>
+    </span>
+  )
+}
+
+function BitcoinMark() {
+  return (
+    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-signal/30 bg-signal/[0.08] font-display text-lg font-bold text-signal-soft">
+      ₿
+    </span>
+  )
+}
+
+function EthereumMark() {
+  return (
+    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.04]">
+      <svg viewBox="0 0 16 26" className="h-5 w-3.5" aria-hidden="true">
+        <path d="M8 0 L16 13 L8 18 L0 13 Z" fill="#64748B" />
+        <path d="M8 0 L8 18 L16 13 Z" fill="#94A3B8" />
+        <path d="M8 19.6 L16 14.6 L8 26 L0 14.6 Z" fill="#22D3EE" opacity="0.85" />
+      </svg>
+    </span>
+  )
+}
+
+/* -------------------------------------------------------------------- */
+
+const METHODS = [
+  {
+    key: 'paypal',
+    title: 'PayPal',
+    marks: [PayPalMark],
+    body: 'One-click checkout through your existing PayPal balance or linked funding source, wrapped in full buyer protection.',
+    rows: [
+      ['Settlement', 'Instant'],
+      ['Disputes', 'Covered'],
+    ],
+  },
+  {
+    key: 'cards',
+    title: 'Credit Cards',
+    marks: [VisaMark, MastercardMark],
+    body: 'Visa and Mastercard processed under PCI-DSS Level 1 with 3-D Secure 2.0. Card numbers never touch our servers — only tokens do.',
+    rows: [
+      ['Authorization', '< 2s'],
+      ['Tokenized', 'Yes'],
+    ],
+  },
+  {
+    key: 'crypto',
+    title: 'Cryptocurrency',
+    marks: [BitcoinMark, EthereumMark],
+    body: 'Bitcoin and Ethereum accepted natively. Non-custodial flow: pay from your own wallet to a single-use address, confirmed on-chain.',
+    rows: [
+      ['Confirmations', '2+'],
+      ['Custody', 'Self'],
+    ],
+  },
+]
+
+const TRUST = ['256-bit TLS', 'PCI-DSS Level 1', '3-D Secure 2.0', 'Non-custodial crypto']
+
+function Payments() {
+  return (
+    <section id="payments" className="relative scroll-mt-24 overflow-hidden bg-well/50 py-28 sm:py-36">
+      <div className="lab-grid absolute inset-0 opacity-60" aria-hidden="true" />
+      <div
+        className="absolute inset-0"
+        aria-hidden="true"
+        style={{
+          background:
+            'radial-gradient(700px 420px at 50% 0%, rgba(6,182,212,0.10), transparent 65%)',
+        }}
+      />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6">
+        <SectionHeader
+          align="center"
+          eyebrow="Transactions"
+          title="Payment acceptances."
+          sub="Settle however you operate — consumer rails or on-chain. Every route is encrypted end to end and never exposes raw credentials to our infrastructure."
+        />
+
+        <motion.div
+          variants={stagger(0.1, 0.16)}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mt-16 grid gap-6 lg:grid-cols-3"
+        >
+          {METHODS.map((m) => (
+            <motion.article
+              key={m.key}
+              variants={fadeUp}
+              whileHover={{ y: -6 }}
+              transition={TAP_SPRING}
+              className="group relative rounded-2xl bg-gradient-to-b from-white/[0.14] via-white/[0.05] to-transparent p-px transition-shadow duration-300 hover:shadow-glow"
+            >
+              <div className="relative flex h-full flex-col rounded-[15px] bg-[#101A30]/95 p-7 backdrop-blur-xl">
+                {/* Status row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {m.marks.map((Mark, i) => (
+                      <Mark key={i} />
+                    ))}
+                  </div>
+                  <span className="inline-flex items-center gap-2 font-mono text-[10px] tracking-lab text-signal-soft">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
+                      <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal" />
+                    </span>
+                    ACTIVE
+                  </span>
+                </div>
+
+                <h3 className="mt-7 font-display text-xl font-semibold text-slate-100">
+                  {m.title}
+                </h3>
+                <p className="mt-3 flex-1 text-sm leading-relaxed text-slate-400">{m.body}</p>
+
+                {/* Spec rows */}
+                <dl className="mt-7 space-y-3 border-t hairline pt-6">
+                  {m.rows.map(([k, v]) => (
+                    <div key={k} className="flex items-center justify-between">
+                      <dt className="font-mono text-[10px] uppercase tracking-lab text-slate-500">
+                        {k}
+                      </dt>
+                      <dd className="font-mono text-xs text-slate-200">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </motion.article>
+          ))}
+        </motion.div>
+
+        {/* Trust strip */}
+        <motion.ul
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mx-auto mt-12 flex max-w-3xl flex-wrap items-center justify-center gap-x-8 gap-y-3"
+        >
+          {TRUST.map((t) => (
+            <li
+              key={t}
+              className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-lab text-slate-500"
+            >
+              <span className="h-px w-3 bg-signal/50" aria-hidden="true" />
+              {t}
+            </li>
+          ))}
+        </motion.ul>
+
+        <motion.p
+          variants={fadeUp}
+          initial="hidden"
+          whileInView="show"
+          viewport={VIEWPORT}
+          className="mx-auto mt-8 max-w-2xl text-center font-mono text-[10px] uppercase tracking-lab text-slate-600"
+        >
+          UI placeholders — wire to your processor (Stripe, PayPal SDK, BTCPay) at integration
+        </motion.p>
+      </div>
+    </section>
+  )
+}
+
+
+/* ============ components/sections/Contact.jsx ============ */
+const CHANNELS = [
+  { icon: Mail, label: 'Support', value: 'support@synaptiq.bio' },
+  { icon: Clock, label: 'Response window', value: 'Mon–Fri · 09:00–18:00 GMT' },
+  { icon: MapPin, label: 'Operations', value: 'Dublin, IE' },
+]
+
+function Contact() {
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    // Front-end placeholder — POST to your endpoint here.
+    setSent(true)
+  }
+
+  return (
+    <section id="contact" className="relative scroll-mt-24 py-28 sm:py-36">
+      <div className="mx-auto max-w-7xl px-6">
+        <div className="grid gap-14 lg:grid-cols-[1fr_1.15fr] lg:gap-20">
+          {/* Channels */}
+          <div>
+            <SectionHeader
+              eyebrow="Contact"
+              title="Speak with the team."
+              sub="Documentation requests, wholesale inquiries, or batch questions — a researcher, not a bot, reads every message."
+            />
+
+            <motion.ul
+              variants={stagger(0.15, 0.12)}
+              initial="hidden"
+              whileInView="show"
+              viewport={VIEWPORT}
+              className="mt-12 space-y-6"
+            >
+              {CHANNELS.map((c) => (
+                <motion.li key={c.label} variants={fadeUp} className="flex items-center gap-5">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-signal-soft">
+                    <c.icon className="h-5 w-5" strokeWidth={1.6} />
+                  </span>
+                  <span>
+                    <span className="mono-label block">{c.label}</span>
+                    <span className="mt-1 block text-sm text-slate-200">{c.value}</span>
+                  </span>
+                </motion.li>
+              ))}
+            </motion.ul>
+          </div>
+
+          {/* Form */}
+          <motion.form
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="show"
+            viewport={VIEWPORT}
+            onSubmit={handleSubmit}
+            className="glass-panel self-start p-8 sm:p-10"
+          >
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="block">
+                <span className="mono-label">Name</span>
+                <input
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="Dr. A. Researcher"
+                  className="input-field mt-2"
+                />
+              </label>
+              <label className="block">
+                <span className="mono-label">Email</span>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="you@institution.org"
+                  className="input-field mt-2"
+                />
+              </label>
+            </div>
+
+            <label className="mt-5 block">
+              <span className="mono-label">Message</span>
+              <textarea
+                name="message"
+                rows={5}
+                required
+                placeholder="Batch ID, order number, or inquiry…"
+                className="input-field mt-2 resize-none"
+              />
+            </label>
+
+            <div className="mt-7 flex items-center justify-between gap-4">
+              <Button as="button" type="submit" disabled={sent}>
+                {sent ? (
+                  <>
+                    <Check className="h-4 w-4" />
+                    Received
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send message
+                  </>
+                )}
+              </Button>
+              <span className="font-mono text-[10px] uppercase tracking-lab text-slate-600">
+                {sent ? 'Demo state — connect an endpoint' : 'Encrypted in transit'}
+              </span>
+            </div>
+          </motion.form>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+
+/* ============ components/Footer.jsx ============ */
+const NAV = [
+  { label: 'Products', href: '#products' },
+  { label: 'Certificates of Analysis', href: '#certificates' },
+  { label: 'FAQ', href: '#faq' },
+  { label: 'Contact Us', href: '#contact' },
+]
+
+const LEGAL = ['Privacy Policy', 'Terms of Service', 'Shipping & Returns']
+
+function Footer() {
+  return (
+    <footer className="border-t hairline bg-well/60">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="grid gap-12 md:grid-cols-[1.4fr_1fr_1fr]">
+          {/* Brand */}
+          <div>
+            <a href="#top" className="inline-flex items-center gap-3">
+              <svg viewBox="0 0 32 32" className="h-7 w-7" aria-hidden="true">
+                <path
+                  d="M16 2 L28 9 L28 23 L16 30 L4 23 L4 9 Z"
+                  fill="none"
+                  stroke="#06B6D4"
+                  strokeWidth="2"
+                />
+                <circle cx="16" cy="16" r="3.5" fill="#22D3EE" />
+              </svg>
+              <span className="font-display text-lg font-semibold tracking-tight text-slate-100">
+                SYNAPTIQ
+              </span>
+            </a>
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-500">
+              Precision cognitive formulations with public, third-party verification on every
+              batch. Measured, documented, dispatched.
+            </p>
+          </div>
+
+          {/* Navigate */}
+          <nav aria-label="Footer">
+            <p className="mono-label">Navigate</p>
+            <ul className="mt-5 space-y-3">
+              {NAV.map((n) => (
+                <li key={n.href}>
+                  <a
+                    href={n.href}
+                    className="text-sm text-slate-400 transition-colors duration-200 hover:text-signal-soft"
+                  >
+                    {n.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
+          {/* Legal */}
+          <div>
+            <p className="mono-label">Legal</p>
+            <ul className="mt-5 space-y-3">
+              {LEGAL.map((l) => (
+                <li key={l}>
+                  <a
+                    href="#top"
+                    className="text-sm text-slate-400 transition-colors duration-200 hover:text-signal-soft"
+                  >
+                    {l}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t hairline pt-7 sm:flex-row sm:items-center">
+          <p className="font-mono text-[10px] uppercase tracking-lab text-slate-600">
+            © 2026 Synaptiq Labs · All rights reserved
+          </p>
+          <p className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-lab text-slate-600">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-signal" />
+            </span>
+            All systems nominal
+          </p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+
+/* ============ App.jsx ============ */
+function App() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  // Close the navigation panel with Escape
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && setMenuOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="relative min-h-screen overflow-x-clip">
+        <Navbar open={menuOpen} onToggle={() => setMenuOpen((v) => !v)} />
+
+        <AnimatePresence>
+          {menuOpen && <SideMenu key="side-menu" onClose={() => setMenuOpen(false)} />}
+        </AnimatePresence>
+
+        <main>
+          <Hero />
+          <Products />
+          <Certificates />
+          <Faq />
+          <Payments />
+          <Contact />
+        </main>
+
+        <Footer />
+      </div>
+    </MotionConfig>
+  )
+}
+
+
+/* ============ mount ============ */
+createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+    </script>
+  </body>
 </html>
