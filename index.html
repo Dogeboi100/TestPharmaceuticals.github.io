@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroPep | Advanced Peptide Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /*
+     * ══════════════════════════════════════════════
+     *  DESIGN TOKENS — Scientifically Grounded
+     * ══════════════════════════════════════════════
+     *  Colour Psychology References:
+     *  • Hallock (2003): Blue universally preferred
+     *    colour globally: 35.6% men, 27.3% women.
+     *  • Mehta & Zhu (2009, Science): Blue enhances
+     *    analytical performance & trust.
+     *  • Küller et al. (2009): Dark high-contrast UIs
+     *    reduce visual fatigue in sustained viewing.
+     *  • Elliot & Maier (2012): Cool-blue environments
+     *    consistently rated as competent & credible.
+     * ══════════════════════════════════════════════
+     */
+    :root {
+      --void:        #020C1B;
+      --deep:        #071524;
+      --surface:     #0D1F36;
+      --elevated:    #122842;
+      --panel:       #0A1B30;
+
+      --cyan:        #00D4FF;
+      --cyan-dim:    #008EAA;
+      --cyan-glow:   rgba(0,212,255,.12);
+      --cyan-trace:  rgba(0,212,255,.06);
+
+      --violet:      #8B5CF6;
+      --violet-dim:  #5B3FA8;
+      --violet-glow: rgba(139,92,246,.12);
+
+      --green:       #00FFA3;
+      --green-dim:   #00B372;
+
+      --txt-1:       #DCF0FF;
+      --txt-2:       #6B9BB8;
+      --txt-3:       #2E5572;
+
+      --bd-0:        rgba(0,212,255,.07);
+      --bd-1:        rgba(0,212,255,.22);
+      --bd-2:        rgba(0,212,255,.55);
+
+      --r-sm:        6px;
+      --r-md:        10px;
+      --r-lg:        16px;
+
+      --display: 'Space Grotesk', sans-serif;
+      --mono:    'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--void);
+      color: var(--txt-1);
+      font-family: var(--display);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ── CUSTOM CURSOR ── */
+    #cur-dot {
+      position: fixed; z-index: 9999;
+      width: 7px; height: 7px;
+      background: var(--cyan);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      box-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,212,255,.4);
+      transition: width .08s, height .08s;
+    }
+    #cur-ring {
+      position: fixed; z-index: 9998;
+      width: 28px; height: 28px;
+      border: 1px solid rgba(0,212,255,.45);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(-50%,-50%);
+      transition: all .14s ease;
+    }
+
+    /* ── HAMBURGER BUTTON ── */
+    #menu-btn {
+      position: fixed; top: 28px; left: 28px;
+      z-index: 1001;
+      background: rgba(7,21,36,.82);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--bd-0);
+      border-radius: var(--r-md);
+      padding: 13px 14px;
+      cursor: pointer;
+      display: flex; flex-direction: column; gap: 5px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #menu-btn:hover {
+      border-color: var(--bd-1);
+      box-shadow: 0 0 20px var(--cyan-glow);
+    }
+    #menu-btn .bar {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--cyan);
+      border-radius: 2px;
+      box-shadow: 0 0 6px rgba(0,212,255,.6);
+      transition: transform .35s cubic-bezier(.23,1,.32,1),
+                  opacity .25s;
+    }
+    #menu-btn.active .bar:nth-child(1){ transform: translateY(7px) rotate(45deg); }
+    #menu-btn.active .bar:nth-child(2){ opacity: 0; transform: scaleX(0); }
+    #menu-btn.active .bar:nth-child(3){ transform: translateY(-7px) rotate(-45deg); }
+
+    /* ── SIDE MENU ── */
+    #side-menu {
+      position: fixed; inset: 0 auto 0 0;
+      width: 270px;
+      background: rgba(7,18,34,.96);
+      backdrop-filter: blur(24px);
+      border-right: 1px solid var(--bd-0);
+      z-index: 1000;
+      transform: translateX(-100%);
+      transition: transform .42s cubic-bezier(.23,1,.32,1);
+      display: flex; flex-direction: column;
+      padding: 100px 0 48px;
+    }
+    #side-menu.open { transform: translateX(0); }
+
+    .menu-logo {
+      position: absolute; top: 26px; left: 24px;
+      font-family: var(--mono); font-weight: 600;
+      font-size: .82rem; letter-spacing: .22em;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+    .menu-logo span { color: var(--violet); }
+
+    .nav-section-label {
+      font-family: var(--mono);
+      font-size: .62rem; letter-spacing: .22em;
+      color: var(--txt-3); text-transform: uppercase;
+      padding: 0 22px 6px;
+      margin-top: 8px;
+    }
+    .nav-divider {
+      height: 1px; background: var(--bd-0);
+      margin: 14px 22px;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 22px;
+      color: var(--txt-2);
+      text-decoration: none;
+      font-size: .9rem; font-weight: 500;
+      letter-spacing: .06em; text-transform: uppercase;
+      border-radius: 0;
+      position: relative;
+      transition: color .2s, background .2s;
+      overflow: hidden;
+    }
+    .nav-link::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--cyan);
+      transform: scaleY(0);
+      transition: transform .25s cubic-bezier(.23,1,.32,1);
+    }
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--cyan);
+      background: var(--cyan-trace);
+    }
+    .nav-link:hover::before,
+    .nav-link.active::before { transform: scaleY(1); }
+    .nav-link .nav-icon {
+      font-family: var(--mono);
+      font-size: .68rem; color: var(--cyan-dim);
+      opacity: 0;
+      transition: opacity .2s;
+    }
+    .nav-link:hover .nav-icon { opacity: 1; }
+
+    /* ── OVERLAY ── */
+    #menu-overlay {
+      position: fixed; inset: 0;
+      background: rgba(2,12,27,.72);
+      z-index: 999; opacity: 0;
+      pointer-events: none;
+      transition: opacity .35s;
+    }
+    #menu-overlay.on { opacity: 1; pointer-events: all; }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+    }
+    #brain-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block;
+    }
+    #lens-overlay {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+      display: block;
+    }
+
+    /* grid overlay for hero */
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0; z-index: 5;
+      background-image:
+        linear-gradient(rgba(0,212,255,.028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,.028) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
+
+    .hero-text {
+      position: absolute; z-index: 20;
+      bottom: 13%; left: 50%; transform: translateX(-50%);
+      text-align: center; white-space: nowrap;
+    }
+    .hero-eyebrow {
+      font-family: var(--mono);
+      font-size: .72rem; letter-spacing: .32em;
+      color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 14px;
+      opacity: .9;
+    }
+    .hero-title {
+      font-size: clamp(2.2rem, 4.5vw, 4rem);
+      font-weight: 700; letter-spacing: -.025em; line-height: 1.06;
+      background: linear-gradient(140deg, var(--txt-1) 0%, var(--cyan) 80%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .hero-sub {
+      font-size: .98rem; color: var(--txt-2);
+      line-height: 1.72; max-width: 460px;
+      margin: 0 auto;
+    }
+
+    .scroll-arrow {
+      position: absolute; z-index: 20;
+      bottom: 34px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 7px;
+    }
+    .scroll-arrow-line {
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, var(--cyan), transparent);
+      animation: pulseY 2.2s ease-in-out infinite;
+    }
+    .scroll-arrow-label {
+      font-family: var(--mono); font-size: .6rem;
+      letter-spacing: .22em; color: var(--txt-3);
+      text-transform: uppercase;
+    }
+    @keyframes pulseY {
+      0%,100%{ opacity:.25; transform: scaleY(1); }
+      50%{ opacity:1; transform: scaleY(1.15); }
+    }
+
+    /* ── SHARED SECTION LAYOUT ── */
+    .sec { padding: 110px 0; }
+    .sec-inner {
+      max-width: 1240px; margin: 0 auto;
+      padding: 0 64px;
+    }
+    @media(max-width:768px){
+      .sec { padding: 80px 0; }
+      .sec-inner { padding: 0 24px; }
+    }
+    .sec-bg-deep  { background: var(--deep); }
+    .sec-bg-void  { background: var(--void); }
+
+    .sec-eyebrow {
+      font-family: var(--mono); font-size: .66rem;
+      letter-spacing: .28em; color: var(--cyan);
+      text-transform: uppercase; margin-bottom: 12px;
+    }
+    .sec-title {
+      font-size: clamp(1.7rem,3vw,2.8rem);
+      font-weight: 700; letter-spacing: -.022em; line-height: 1.1;
+    }
+    .sec-sub {
+      margin-top: 14px; color: var(--txt-2);
+      font-size: .97rem; line-height: 1.75;
+      max-width: 580px;
+    }
+    .sec-head { margin-bottom: 58px; }
+
+    /* ── PRODUCTS ── */
+    .grid-products {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      gap: 22px;
+    }
+    .prod-card {
+      background: var(--surface);
+      border: 1px solid var(--bd-0);
+      border-radius: var(--r-lg);
+      padding: 28px 26px;
+      position: relative; overflow: hidden;
+      transition: transform .28s ease, border-color .28s, box-shadow .28s;
+    }
+    .prod-card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent 0%, var(--cyan) 50%, transparent 100%);
+      opacity: 0; transition: opacity .28s;
+    }
+    .prod-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--bd-1);
+      box-shadow: 0 24px 64px rgba(0,212,255,.07);
+    }
+    .prod-card:hover::after { opacity: 1; }
+
+    .prod-tag {
+      display: inline-block;
+      font-family: var(--mono); font-size: .62rem;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--cyan); background: var(--cyan-glow);
+      border: 1px solid var(--bd-1);
+      border-radius: 20px; padding: 3px 11px;
+      margin-bottom: 14px;
+    }
+    .prod-name {
+      font-size: 1.25rem; font-weight: 600;
+      letter-spacing: -.01em; margin-bottom: 5px;
+    }
+    .prod-aka {
+      font-family: var(--mono); font-size: .72rem;
+      color: var(--violet); margin-bottom: 12px;
+    }
+    .prod-desc {
+      font-size: .875rem; color: var(--txt-2);
+      line-height: 1.68; margin-bottom: 20px;
+    }
+    .prod-specs { display: flex; flex-direction: column; gap: 0; }
+    .spec-row {
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: .7rem;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--bd-0);
+    }
+    .spec-row:last-child { border-bottom: none; }
+    .spec-k { color: var(--txt-3); }
+    .spec-v { color: var(--green); }
+
+    /* ── COA ── */
+    .coa-wrap {
+      background: var(--surface);
+      border: 1px solid var(--bd-0);
+      border-radius: var(--r-lg);
+      padding: 44px;
+      position: relative; overflow: hidden;
+    }
+    .coa-wrap::after {
+      content: 'COA';
+      position: absolute; top: -28px; right: 20px;
+      font-size: 7.5rem; font-weight: 800;
+      font-family: var(--mono);
+      color: rgba(0,212,255,.025);
+      pointer-events: none; user-select: none;
+    }
+    .coa-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 36px; padding-bottom: 24px;
+      border-bottom: 1px solid var(--bd-0);
+      flex-wrap: wrap; gap: 16px;
+    }
+    .coa-badge {
+      font-family: var(--mono); font-size: .68rem;
+      letter-spacing: .12em;
+      background: linear-gradient(135deg, var(--cyan-dim), var(--violet-dim));
+      color: #fff; padding: 6px 18px; border-radius: 20px;
+      font-weight: 500;
+    }
+    .coa-select {
+      background: var(--elevated); border: 1px solid var(--bd-0);
+      color: var(--txt-1); font-family: var(--mono);
+      font-size: .8rem; padding: 10px 16px;
+      border-radius: var(--r-sm); cursor: pointer; outline: none;
+      transition: border-color .2s;
+    }
+    .coa-select:hover, .coa-select:focus { border-color: var(--bd-1); }
+    .coa-table {
+      width: 100%; border-collapse: collapse;
+      font-family: var(--mono); font-size: .78rem;
+      margin-bottom: 28px;
+    }
+    .coa-table th {
+      text-align: left; color: var(--txt-3);
+      font-weight: 500; letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--bd-0);
+    }
+    .coa-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid rgba(0,212,255,.04);
+      color: var(--txt-2);
+      transition: background .15s, color .15s;
+    }
+    .coa-table tr:hover td {
+      background: var(--cyan-trace);
+      color: var(--txt-1);
+    }
+    .coa-pass   { color: var(--green) !important; }
+    .coa-result { color: var(--cyan)  !important; }
+    .coa-footer {
+      font-family: var(--mono); font-size: .68rem;
+      color: var(--txt-3); line-height: 1.8;
+    }
+    .coa-footer em { color: var(--cyan); font-style: normal; }
+
+    /* ── FAQ ── */
+    .faq-list { display: flex; flex-direction: column; gap: 11px; max-width: 820px; }
+    .faq-item {
+      background: var(--surface);
+      border: 1px solid var(--bd-0);
+      border-radius: var(--r-md);
+      overflow: hidden;
+      transition: border-color .2s;
+    }
+    .faq-item.open { border-color: var(--bd-1); }
+    .faq-q {
+      padding: 19px 22px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 20px; cursor: pointer;
+      font-size: .92rem; font-weight: 500;
+      transition: color .2s;
+    }
+    .faq-q:hover { color: var(--cyan); }
+    .faq-ic {
+      flex-shrink: 0;
+      width: 22px; height: 22px;
+      border: 1px solid var(--bd-1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem; color: var(--cyan);
+      transition: transform .3s cubic-bezier(.23,1,.32,1), background .2s, color .2s;
+    }
+    .faq-item.open .faq-ic {
+      transform: rotate(45deg);
+      background: var(--cyan); color: var(--void);
+    }
+    .faq-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height .42s cubic-bezier(.4,0,.2,1);
+    }
+    .faq-inner {
+      padding: 16px 22px 20px;
+      border-top: 1px solid var(--bd-0);
+      font-size: .875rem; color: var(--txt-2); line-height: 1.78;
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid; grid-template-columns: 1fr 1.25fr;
+      gap: 64px; align-items: start;
+    }
+    @media(max-width:768px){ .contact-grid { grid-template-columns: 1fr; gap: 48px; } }
+
+    .contact-info-title {
+      font-size: 1rem; font-weight: 500;
+      margin-bottom: 22px;
+    }
+    .contact-row {
+      display: flex; align-items: center; gap: 13px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--bd-0);
+      color: var(--txt-2); font-size: .875rem;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .contact-row:hover { color: var(--cyan); }
+    .contact-ic {
+      font-family: var(--mono); font-size: .72rem;
+      color: var(--cyan); width: 20px;
+      flex-shrink: 0;
+    }
+    .response-times { margin-top: 38px; }
+    .response-times h4 { font-size: 1rem; font-weight: 500; margin-bottom: 14px; }
+    .rt-row {
+      font-size: .84rem; line-height: 2.1;
+      font-family: var(--mono);
+    }
+    .rt-orders  { color: var(--green); }
+    .rt-tech    { color: var(--cyan); }
+    .rt-custom  { color: var(--violet); }
+
+    /* form */
+    .contact-form { display: flex; flex-direction: column; gap: 15px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media(max-width:480px){ .form-row { grid-template-columns: 1fr; } }
+    .f-group { display: flex; flex-direction: column; gap: 6px; }
+    .f-label {
+      font-family: var(--mono); font-size: .63rem;
+      letter-spacing: .17em; color: var(--txt-3); text-transform: uppercase;
+    }
+    .f-input, .f-textarea {
+      background: var(--surface);
+      border: 1px solid var(--bd-0);
+      color: var(--txt-1);
+      font-family: var(--display); font-size: .9rem;
+      padding: 11px 15px; border-radius: var(--r-sm);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .f-input:focus, .f-textarea:focus {
+      border-color: var(--bd-1);
+      box-shadow: 0 0 0 3px rgba(0,212,255,.08);
+    }
+    .f-input::placeholder, .f-textarea::placeholder { color: var(--txt-3); }
+    .f-textarea { resize: vertical; min-height: 118px; }
+    .btn-send {
+      align-self: flex-start;
+      background: linear-gradient(135deg, var(--cyan-dim) 0%, var(--violet-dim) 100%);
+      color: #fff; border: none;
+      padding: 13px 30px; border-radius: var(--r-sm);
+      font-family: var(--display); font-weight: 600;
+      font-size: .88rem; letter-spacing: .04em;
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .btn-send:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(0,212,255,.22);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--deep);
+      border-top: 1px solid var(--bd-0);
+      padding: 36px 64px;
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 16px;
+    }
+    @media(max-width:768px){ footer { padding: 28px 24px; } }
+    .footer-logo {
+      font-family: var(--mono); font-weight: 700;
+      font-size: .88rem; letter-spacing: .22em;
+      color: var(--cyan);
+    }
+    .footer-logo span { color: var(--violet); }
+    .footer-disc {
+      font-size: .72rem; color: var(--txt-3);
+      max-width: 540px; line-height: 1.65;
+    }
+
+    /* ── SCANLINE VIGNETTE ── */
+    body::after {
+      content: ''; position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse at center, transparent 55%, rgba(2,12,27,.55) 100%),
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 3px,
+          rgba(0,0,0,.012) 3px,
+          rgba(0,0,0,.012) 4px
+        );
+      pointer-events: none; z-index: 9997;
+    }
+
+    /* ── REVEAL ANIMATION ── */
+    .reveal { opacity: 0; transform: translateY(26px); transition: opacity .65s ease, transform .65s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- Custom Cursor -->
+  <div id="cur-dot"></div>
+  <div id="cur-ring"></div>
+
+  <!-- Menu overlay -->
+  <div id="menu-overlay"></div>
+
+  <!-- Hamburger -->
+  <button id="menu-btn" aria-label="Open navigation">
+    <span class="bar"></span>
+    <span class="bar"></span>
+    <span class="bar"></span>
+  </button>
+
+  <!-- Side Navigation -->
+  <nav id="side-menu" aria-label="Main Navigation">
+    <div class="menu-logo">NEURO<span>PEP</span></div>
+
+    <span class="nav-section-label">Navigation</span>
+    <a href="#products" class="nav-link">
+      <span class="nav-icon">▸</span> Products
+    </a>
+    <a href="#coa" class="nav-link">
+      <span class="nav-icon">▸</span> COA
+    </a>
+    <div class="nav-divider"></div>
+    <a href="#faq" class="nav-link">
+      <span class="nav-icon">▸</span> FAQ
+    </a>
+    <a href="#contact" class="nav-link">
+      <span class="nav-icon">▸</span> Contact Us
+    </a>
+  </nav>
+
+  <!-- ══════════ HERO ══════════ -->
+  <section id="hero">
+    <canvas id="brain-canvas"></canvas>
+    <canvas id="lens-overlay"></canvas>
+
+    <div class="hero-text">
+      <p class="hero-eyebrow">Advanced Peptide Research</p>
+      <h1 class="hero-title">Precision at the<br>Molecular Level</h1>
+      <p class="hero-sub">Research-grade peptides synthesized to pharmaceutical precision. Pushing the frontier of bioregulatory science.</p>
+    </div>
+
+    <div class="scroll-arrow">
+      <div class="scroll-arrow-line"></div>
+      <span class="scroll-arrow-label">Explore</span>
+    </div>
+  </section>
+
+  <!-- ══════════ PRODUCTS ══════════ -->
+  <section id="products" class="sec sec-bg-deep">
+    <div class="sec-inner">
+      <div class="sec-head reveal">
+        <p class="sec-eyebrow">// compound library</p>
+        <h2 class="sec-title">Research Compounds</h2>
+        <p class="sec-sub">Every peptide is synthesised to ≥98% purity via HPLC and confirmed by ESI-MS before dispatch. Acetate salt form as standard.</p>
+      </div>
+
+      <div class="grid-products">
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">Body Protection</span>
+          <h3 class="prod-name">BPC-157</h3>
+          <p class="prod-aka">Body Protective Compound-157</p>
+          <p class="prod-desc">A stable gastric pentadecapeptide fragment exhibiting pronounced cytoprotective and regenerative activity. Sequence: Gly-Glu-Pro-Pro-Pro-Gly-Lys-Pro-Ala-Asp-Asp-Ala-Gly-Leu-Val.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">1419.55 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">15 AA</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥99.2%</span></div>
+          </div>
+        </div>
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">Tissue Repair</span>
+          <h3 class="prod-name">TB-500</h3>
+          <p class="prod-aka">Thymosin Beta-4 Synthetic Fragment</p>
+          <p class="prod-desc">A synthetic version of the endogenous 43-residue peptide found in virtually all mammalian cells. Promotes actin polymerisation and cell-migration signalling.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">4963.50 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">43 AA</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.6%</span></div>
+          </div>
+        </div>
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">GH Secretagogue</span>
+          <h3 class="prod-name">CJC-1295</h3>
+          <p class="prod-aka">Modified GRF(1-29) + DAC</p>
+          <p class="prod-desc">A tetrasubstituted GHRH(1-29) analogue with Drug Affinity Complex modification. Covalent binding to circulating albumin extends plasma half-life to 6–8 days.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">3647.28 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Half-life</span><span class="spec-v">6–8 days</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.9%</span></div>
+          </div>
+        </div>
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">GH Secretagogue</span>
+          <h3 class="prod-name">Ipamorelin</h3>
+          <p class="prod-aka">Aib-His-D-2Nal-D-Phe-Lys-NH₂</p>
+          <p class="prod-desc">A selective pentapeptide ghrelin mimetic with high pituitary specificity and negligible impact on cortisol or prolactin — distinguishing it from earlier GHRP analogues.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">711.87 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">5 AA</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥99.0%</span></div>
+          </div>
+        </div>
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">Neuroprotection</span>
+          <h3 class="prod-name">Semax</h3>
+          <p class="prod-aka">ACTH(4-7) Pro-Gly-Pro Analogue</p>
+          <p class="prod-desc">A heptapeptide ACTH analogue with robust nootropic properties. Significantly upregulates BDNF and trkB mRNA expression in the hippocampus and basal forebrain in vivo.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">813.98 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Length</span><span class="spec-v">7 AA</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.5%</span></div>
+          </div>
+        </div>
+
+        <div class="prod-card reveal">
+          <span class="prod-tag">Melanocortin</span>
+          <h3 class="prod-name">PT-141</h3>
+          <p class="prod-aka">Bremelanotide — Cyclic Heptapeptide</p>
+          <p class="prod-desc">A melanocortin receptor agonist (MC1R–MC5R) with high selectivity. Operates via CNS-mediated pathways rather than the peripheral vascular route of prior analogues.</p>
+          <div class="prod-specs">
+            <div class="spec-row"><span class="spec-k">MW</span><span class="spec-v">1025.18 g/mol</span></div>
+            <div class="spec-row"><span class="spec-k">Structure</span><span class="spec-v">Cyclic 7-AA</span></div>
+            <div class="spec-row"><span class="spec-k">Purity</span><span class="spec-v">≥98.8%</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ COA ══════════ -->
+  <section id="coa" class="sec sec-bg-void">
+    <div class="sec-inner">
+      <div class="sec-head reveal">
+        <p class="sec-eyebrow">// quality assurance</p>
+        <h2 class="sec-title">Certificate of Analysis</h2>
+        <p class="sec-sub">Triple verification: RP-HPLC purity, ESI-MS identity, and LAL endotoxin testing on every production lot.</p>
+      </div>
+
+      <div class="coa-wrap reveal">
+        <div class="coa-top">
+          <div>
+            <div style="font-family:var(--mono);font-size:.62rem;color:var(--txt-3);letter-spacing:.18em;margin-bottom:10px;text-transform:uppercase;">Select Compound</div>
+            <select class="coa-select" id="coa-select">
+              <option value="BPC157">BPC-157 — Lot #NP2025-B157-04</option>
+              <option value="TB500">TB-500 — Lot #NP2025-TB5A-02</option>
+              <option value="CJC">CJC-1295 — Lot #NP2025-CJC3-07</option>
+              <option value="IPA">Ipamorelin — Lot #NP2025-IPA1-05</option>
+            </select>
+          </div>
+          <div class="coa-badge">VERIFIED ✓</div>
+        </div>
+
+        <table class="coa-table">
+          <thead>
+            <tr>
+              <th>Test Parameter</th>
+              <th>Method</th>
+              <th>Specification</th>
+              <th>Result</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="coa-body"></tbody>
+        </table>
+
+        <div class="coa-footer">
+          <em>NeuroPep Laboratories</em> · ISO/IEC 17025 Accredited Testing Facility ·
+          Analysis Date: <span id="coa-date">2025-03-12</span> · Analyst ID: NPL-3847 ·
+          All results expressed as per specification at time of analysis
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ FAQ ══════════ -->
+  <section id="faq" class="sec sec-bg-deep">
+    <div class="sec-inner">
+      <div class="sec-head reveal">
+        <p class="sec-eyebrow">// knowledge base</p>
+        <h2 class="sec-title">Frequently Asked Questions</h2>
+        <p class="sec-sub">Scientific answers on storage, analysis methods, synthesis, and handling for research peptides.</p>
+      </div>
+
+      <div class="faq-list">
+
+        <div class="faq-item reveal">
+          <div class="faq-q">
+            What is the recommended storage protocol for lyophilised peptides?
+            <span class="faq-ic">+</span>
+          </div>
+          <div class="faq-body">
+            <div class="faq-inner">
+              Lyophilised peptides should be stored at −20 °C in a dry environment, protected from light and humidity. Avoid freeze-thaw cycling by preparing single-use aliquots before reconstitution. Bacteriostatic water (0.9% benzyl alcohol) is the preferred reconstitution solvent for extended stability post-reconstitution. Reconstituted aliquots stored at 4 °C remain stable for up to 30 days. Correctly stored lyophilised peptides maintain ≥95% purity for 24 months from the date of manufacture.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal">
+          <div class="faq-q">
+            How is purity determined, and what HPLC method is used?
+            <span class="faq-ic">+</span>
+          </div>
+          <div class="faq-body">
+            <div class="faq-inner">
+              Purity is quantified by reverse-phase HPLC (RP-HPLC) using a C18 column with a water/acetonitrile gradient (0.1% TFA modifier), with area-percentage integration at 220 nm UV. Molecular identity is confirmed by electrospray ionisation mass spectrometry (ESI-MS), comparing theoretical and observed m/z values to within ±0.1 Da. Full HPLC chromatograms and MS spectra are included in each lot's Certificate of Analysis.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal">
+          <div class="faq-q">
+            What is the difference between acetate salt and TFA salt forms?
+            <span class="faq-ic">+</span>
+          </div>
+          <div class="faq-body">
+            <div class="faq-inner">
+              The counterion in the final salt form affects aqueous solubility and biocompatibility. Trifluoroacetate (TFA) salts are the default product of Fmoc SPPS but carry cytotoxicity concerns at higher concentrations. Acetate is a physiological counterion making it preferred for biological research applications. All NeuroPep compounds undergo ion-exchange chromatography to yield acetate form as standard, with residual TFA content consistently below 0.1% by ¹⁹F NMR.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal">
+          <div class="faq-q">
+            What are your minimum order quantities and packaging specifications?
+            <span class="faq-ic">+</span>
+          </div>
+          <div class="faq-body">
+            <div class="faq-inner">
+              Research quantities start at 2 mg for standard peptides and 1 mg for complex or rare sequences. Products are packaged in amber borosilicate glass vials with lyophilised powder under nitrogen atmosphere. Each vial has a tamper-evident seal with lot number and QR code linking to the digital COA. Lyophilised peptides ship at ambient temperature. Reconstituted peptides are dispatched with dry ice. Discreet pharmaceutical-grade secondary packaging ensures product integrity in transit.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item reveal">
+          <div class="faq-q">
+            Do you offer custom peptide synthesis for research projects?
+            <span class="faq-ic">+</span>
+          </div>
+          <div class="faq-body">
+            <div class="faq-inner">
+              Custom synthesis is available for sequences of 2–50 amino acids using Fmoc solid-phase peptide synthesis (SPPS) on automated synthesisers. Services include standard, modified (phosphorylated, biotinylated, fluorescently labelled), cyclic, and stapled peptides. Standard sequences require 10–15 business days. Competitive pricing is available for academic and institutional partners. Please contact the synthesis team with sequence, desired modifications, purity grade (crude / desalted / ≥95% / ≥98%), and required quantity.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ CONTACT ══════════ -->
+  <section id="contact" class="sec sec-bg-void" style="padding-bottom: 140px;">
+    <div class="sec-inner">
+      <div class="sec-head reveal">
+        <p class="sec-eyebrow">// get in touch</p>
+        <h2 class="sec-title">Contact Us</h2>
+        <p class="sec-sub">Our scientific team handles research enquiries, bulk orders, and custom synthesis proposals.</p>
+      </div>
+
+      <div class="contact-grid">
+        <div class="reveal">
+          <h3 class="contact-info-title">Research Enquiries</h3>
+          <a href="mailto:research@neuropep.com" class="contact-row">
+            <span class="contact-ic">@</span>
+            research@neuropep.com
+          </a>
+          <a href="mailto:orders@neuropep.com" class="contact-row">
+            <span class="contact-ic">@</span>
+            orders@neuropep.com
+          </a>
+          <a href="tel:+18005551234" class="contact-row">
+            <span class="contact-ic">☏</span>
+            +1 (800) 555-1234
+          </a>
+          <div class="contact-row">
+            <span class="contact-ic">◎</span>
+            Mon–Fri, 09:00–17:00 EST
+          </div>
+
+          <div class="response-times">
+            <h4>Response Times</h4>
+            <div class="rt-row">
+              <div class="rt-orders">● Orders: &lt;24 hours</div>
+              <div class="rt-tech">● Technical enquiries: 1–2 business days</div>
+              <div class="rt-custom">● Custom synthesis: 2–3 business days</div>
+            </div>
+          </div>
+        </div>
+
+        <form class="contact-form reveal" onsubmit="handleForm(event)">
+          <div class="form-row">
+            <div class="f-group">
+              <label class="f-label">First Name</label>
+              <input type="text" class="f-input" placeholder="Jane">
+            </div>
+            <div class="f-group">
+              <label class="f-label">Last Name</label>
+              <input type="text" class="f-input" placeholder="Smith">
+            </div>
+          </div>
+          <div class="f-group">
+            <label class="f-label">Email</label>
+            <input type="email" class="f-input" placeholder="jane@institution.edu">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Subject</label>
+            <input type="text" class="f-input" placeholder="Research enquiry / Order / Custom synthesis">
+          </div>
+          <div class="f-group">
+            <label class="f-label">Message</label>
+            <textarea class="f-textarea" placeholder="Describe your research application, compound of interest, or any technical queries…"></textarea>
+          </div>
+          <button type="submit" class="btn-send" id="submit-btn">Send Enquiry →</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ FOOTER ══════════ -->
+  <footer>
+    <div class="footer-logo">NEURO<span>PEP</span></div>
+    <p class="footer-disc">All compounds are supplied exclusively for in-vitro research and laboratory purposes. Not intended for human or veterinary use. NeuroPep makes no representation regarding fitness for any particular purpose. Researchers are solely responsible for compliance with applicable local, national, and international regulations.</p>
+  </footer>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+  /* =========================================================
+   *  CURSOR
+   * ========================================================= */
+  const dot  = document.getElementById('cur-dot');
+  const ring = document.getElementById('cur-ring');
+  let rx = 0, ry = 0, cx = 0, cy = 0;
+  document.addEventListener('mousemove', e => { cx = e.clientX; cy = e.clientY; });
+  function moveCursor(){
+    rx += (cx - rx) * 0.16;
+    ry += (cy - ry) * 0.16;
+    dot.style.left  = cx + 'px';
+    dot.style.top   = cy + 'px';
+    ring.style.left = rx + 'px';
+    ring.style.top  = ry + 'px';
+    requestAnimationFrame(moveCursor);
+  }
+  moveCursor();
+
+  /* =========================================================
+   *  HAMBURGER MENU
+   * ========================================================= */
+  const btn     = document.getElementById('menu-btn');
+  const nav     = document.getElementById('side-menu');
+  const overlay = document.getElementById('menu-overlay');
+
+  function closeMenu(){ btn.classList.remove('active'); nav.classList.remove('open'); overlay.classList.remove('on'); }
+  btn.addEventListener('click', () => {
+    const open = nav.classList.toggle('open');
+    btn.classList.toggle('active', open);
+    overlay.classList.toggle('on', open);
+  });
+  overlay.addEventListener('click', closeMenu);
+  document.querySelectorAll('.nav-link').forEach(a => a.addEventListener('click', closeMenu));
+
+  /* =========================================================
+   *  FAQ ACCORDION
+   * ========================================================= */
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      const item = q.parentElement;
+      const body = item.querySelector('.faq-body');
+      const isOpen = item.classList.contains('open');
+      // close all
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-body').style.maxHeight = '0';
+      });
+      if (!isOpen) {
+        item.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+      }
+    });
+  });
+
+  /* =========================================================
+   *  COA TABLE
+   * ========================================================= */
+  const coaData = {
+    BPC157: [
+      ['Identity',          'ESI-MS',              'MW: 1419.5 Da',       '1419.56 Da', 'PASS'],
+      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '99.2%',      'PASS'],
+      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
+      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '91.4%',      'PASS'],
+      ['Water Content',     'Karl Fischer',        '≤10.0%',              '6.3%',       'PASS'],
+      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.04%',      'PASS'],
+      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
+      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
+    ],
+    TB500: [
+      ['Identity',          'ESI-MS',              'MW: 4963.5 Da',       '4963.48 Da', 'PASS'],
+      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '98.6%',      'PASS'],
+      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
+      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '88.7%',      'PASS'],
+      ['Water Content',     'Karl Fischer',        '≤10.0%',              '7.1%',       'PASS'],
+      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.06%',      'PASS'],
+      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
+      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
+    ],
+    CJC: [
+      ['Identity',          'ESI-MS',              'MW: 3647.3 Da',       '3647.29 Da', 'PASS'],
+      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '98.9%',      'PASS'],
+      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
+      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '89.2%',      'PASS'],
+      ['Water Content',     'Karl Fischer',        '≤10.0%',              '7.8%',       'PASS'],
+      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.05%',      'PASS'],
+      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
+      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
+    ],
+    IPA: [
+      ['Identity',          'ESI-MS',              'MW: 711.87 Da',       '711.86 Da',  'PASS'],
+      ['Purity (HPLC)',     'RP-HPLC C18, 220 nm', '≥98.0%',              '99.0%',      'PASS'],
+      ['AA Analysis',       'Marfey Hydrolysis',   'Conforms to sequence','Conforms',   'PASS'],
+      ['Peptide Content',   'Nitrogen Analysis',   '≥85.0% (dry)',        '90.1%',      'PASS'],
+      ['Water Content',     'Karl Fischer',        '≤10.0%',              '6.9%',       'PASS'],
+      ['Residual TFA',      '¹⁹F NMR',             '≤0.10%',              '0.03%',      'PASS'],
+      ['Endotoxin',         'LAL Chromogenic',     '<1.0 EU/mg',          '<0.1 EU/mg', 'PASS'],
+      ['Appearance',        'Visual Inspection',   'White lyoph. powder', 'Conforms',   'PASS'],
+    ],
+  };
+
+  const coaDates = { BPC157:'2025-03-12', TB500:'2025-02-28', CJC:'2025-03-05', IPA:'2025-03-18' };
+
+  function renderCOA(key) {
+    const rows = coaData[key];
+    document.getElementById('coa-body').innerHTML = rows.map(
+      ([p,m,s,r,st]) => `
+        <tr>
+          <td>${p}</td>
+          <td style="color:var(--txt-3)">${m}</td>
+          <td>${s}</td>
+          <td class="coa-result">${r}</td>
+          <td class="coa-pass">${st}</td>
+        </tr>`
+    ).join('');
+    document.getElementById('coa-date').textContent = coaDates[key];
+  }
+  renderCOA('BPC157');
+  document.getElementById('coa-select').addEventListener('change', e => renderCOA(e.target.value));
+
+  /* =========================================================
+   *  CONTACT FORM
+   * ========================================================= */
+  function handleForm(e) {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.textContent = 'Enquiry Sent ✓';
+    btn.style.background = 'linear-gradient(135deg,#00B372,#007352)';
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.textContent = 'Send Enquiry →';
+      btn.style.background = '';
+      btn.disabled = false;
+    }, 4000);
+  }
+
+  /* =========================================================
+   *  SCROLL REVEAL
+   * ========================================================= */
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en, i) => {
+      if (en.isIntersecting) {
+        setTimeout(() => en.target.classList.add('visible'), i * 60);
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  /* =========================================================
+   *  THREE.JS — BRAIN + LENS MAGNIFICATION
+   * ========================================================= */
+  (function initBrain() {
+    const heroEl   = document.getElementById('hero');
+    const brainCvs = document.getElementById('brain-canvas');
+    const lensCvs  = document.getElementById('lens-overlay');
+    const lensCtx  = lensCvs.getContext('2d');
+
+    /* — Renderer — */
+    const renderer = new THREE.WebGLRenderer({
+      canvas: brainCvs,
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true   // Required for lens read-back
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+
+    /* — Scene / Camera — */
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(58, 1, 0.1, 1000);
+    camera.position.z = 5.2;
+
+    /* — Lights — */
+    scene.add(new THREE.AmbientLight(0x001a44, 0.8));
+
+    const light1 = new THREE.PointLight(0x00D4FF, 3.5, 18);
+    light1.position.set(4, 3, 3);
+    scene.add(light1);
+
+    const light2 = new THREE.PointLight(0x8B5CF6, 2.8, 16);
+    light2.position.set(-3, -2, 2);
+    scene.add(light2);
+
+    const light3 = new THREE.PointLight(0x00FFA3, 1.8, 14);
+    light3.position.set(0, -4, -2);
+    scene.add(light3);
+
+    const rimLight = new THREE.DirectionalLight(0x00D4FF, 0.6);
+    rimLight.position.set(-2, 1, -3);
+    scene.add(rimLight);
+
+    /* — Brain Geometry — */
+    function buildBrain() {
+      const geo = new THREE.SphereGeometry(1.62, 128, 128);
+      const pos = geo.attributes.position;
+
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        const len = Math.sqrt(x*x + y*y + z*z);
+        const nx = x/len, ny = y/len, nz = z/len;
+
+        /* Primary gyri — major cortical folds */
+        const gyri =
+          Math.sin(x*2.6+0.5) * Math.cos(y*2.1) * Math.sin(z*2.6+1.0) * 0.22 +
+          Math.sin(x*2.1+1.9) * Math.cos(y*2.6+0.8) * Math.sin(z*2.1-0.6) * 0.18;
+
+        /* Secondary sulci */
+        const sulci =
+          Math.sin(x*5.1+0.4) * Math.cos(y*4.6+1.1) * Math.sin(z*5.1) * 0.09 +
+          Math.sin(x*4.6-0.9) * Math.cos(y*5.1+0.5) * Math.sin(z*4.6+2.0) * 0.07;
+
+        /* Tertiary fine texture */
+        const micro =
+          Math.sin(x*9.5+1.4) * Math.cos(y*9.0) * Math.sin(z*9.5-1.2) * 0.035 +
+          Math.sin(x*10.5) * Math.cos(y*10.0+2.4) * Math.sin(z*10.5+0.8) * 0.025;
+
+        /* Medial longitudinal fissure */
+        const fissure = -Math.exp(-(x*x)/0.055) * 0.38 * Math.max(0, 1 - Math.abs(y)*1.1);
+
+        /* Brainstem taper */
+        const stem = ny < -0.62 ? (ny+0.62) * 0.65 : 0;
+
+        /* Crown cap */
+        const crown = Math.max(0, ny - 0.75) * 0.28;
+
+        const d = gyri + sulci + micro + fissure + stem - crown;
+
+        pos.setXYZ(i,
+          x + nx * d * 1.15,
+          y + ny * d * 0.9  + stem * 0.3,
+          z + nz * d
+        );
+      }
+      pos.needsUpdate = true;
+      geo.computeVertexNormals();
+      return geo;
+    }
+
+    const brainGeo = buildBrain();
+
+    /* Solid brain mesh */
+    const brainMat = new THREE.MeshPhongMaterial({
+      color:     0x061828,
+      emissive:  0x00263D,
+      specular:  0x00CCFF,
+      shininess: 130,
+    });
+    const brainMesh = new THREE.Mesh(brainGeo, brainMat);
+    scene.add(brainMesh);
+
+    /* Wireframe overlay */
+    const wfGeo = new THREE.WireframeGeometry(brainGeo);
+    const wfMat = new THREE.LineBasicMaterial({
+      color: 0x00D4FF, transparent: true, opacity: 0.055
+    });
+    const wireframe = new THREE.LineSegments(wfGeo, wfMat);
+    scene.add(wireframe);
+
+    /* Outer glow shell */
+    const outerGeo = new THREE.SphereGeometry(1.9, 32, 32);
+    const outerMat = new THREE.MeshBasicMaterial({
+      color: 0x004466, transparent: true, opacity: 0.045,
+      side: THREE.BackSide
+    });
+    const outer = new THREE.Mesh(outerGeo, outerMat);
+    scene.add(outer);
+
+    /* Secondary inner glow */
+    const innerGeo = new THREE.SphereGeometry(1.72, 32, 32);
+    const innerMat = new THREE.MeshBasicMaterial({
+      color: 0x00D4FF, transparent: true, opacity: 0.03,
+      side: THREE.BackSide
+    });
+    scene.add(new THREE.Mesh(innerGeo, innerMat));
+
+    /* — Neural Particles — */
+    const N = 500;
+    const pPositions = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      const r     = 2.3 + Math.random() * 3.2;
+      pPositions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+      pPositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+      pPositions[i*3+2] = r * Math.cos(phi);
+    }
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+    const pMat = new THREE.PointsMaterial({
+      color: 0x00D4FF, size: 0.022,
+      transparent: true, opacity: 0.55, sizeAttenuation: true
+    });
+    const particles = new THREE.Points(pGeo, pMat);
+    scene.add(particles);
+
+    /* Synapse lines */
+    const linePalette = [0x00D4FF, 0x8B5CF6, 0x00FFA3];
+    let lineCount = 0;
+    for (let i = 0; i < N && lineCount < 70; i++) {
+      for (let j = i+1; j < N && lineCount < 70; j++) {
+        const dx = pPositions[i*3]-pPositions[j*3];
+        const dy = pPositions[i*3+1]-pPositions[j*3+1];
+        const dz = pPositions[i*3+2]-pPositions[j*3+2];
+        if (Math.sqrt(dx*dx+dy*dy+dz*dz) < 2.8) {
+          const pts = [
+            new THREE.Vector3(pPositions[i*3], pPositions[i*3+1], pPositions[i*3+2]),
+            new THREE.Vector3(pPositions[j*3], pPositions[j*3+1], pPositions[j*3+2]),
+          ];
+          const lg = new THREE.BufferGeometry().setFromPoints(pts);
+          const lm = new THREE.LineBasicMaterial({
+            color: linePalette[lineCount % 3],
+            transparent: true, opacity: 0.12
+          });
+          scene.add(new THREE.Line(lg, lm));
+          lineCount++;
+        }
+      }
+    }
+
+    /* — Lens Magnification — */
+    const LENS_R = 82;
+    const ZOOM   = 1.95;
+    let   mx = -9999, my = -9999, hovering = false;
+
+    brainCvs.addEventListener('mousemove', e => {
+      const rc = brainCvs.getBoundingClientRect();
+      mx = e.clientX - rc.left;
+      my = e.clientY - rc.top;
+      hovering = true;
+    });
+    brainCvs.addEventListener('mouseleave', () => { hovering = false; });
+
+    function drawLens() {
+      lensCtx.clearRect(0, 0, lensCvs.width, lensCvs.height);
+      if (!hovering) return;
+
+      const srcX = mx - LENS_R / ZOOM;
+      const srcY = my - LENS_R / ZOOM;
+      const srcW = (LENS_R * 2) / ZOOM;
+      const srcH = (LENS_R * 2) / ZOOM;
+      const dstX = mx - LENS_R;
+      const dstY = my - LENS_R;
+
+      lensCtx.save();
+      lensCtx.beginPath();
+      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
+      lensCtx.clip();
+      try {
+        lensCtx.drawImage(renderer.domElement, srcX, srcY, srcW, srcH,
+                          dstX, dstY, LENS_R*2, LENS_R*2);
+      } catch(_) {}
+      lensCtx.restore();
+
+      /* Glowing ring border */
+      const grad = lensCtx.createRadialGradient(mx, my, LENS_R-4, mx, my, LENS_R+4);
+      grad.addColorStop(0, 'rgba(0,212,255,1)');
+      grad.addColorStop(1, 'rgba(0,212,255,0)');
+      lensCtx.beginPath();
+      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
+      lensCtx.strokeStyle = grad;
+      lensCtx.lineWidth = 2.5;
+      lensCtx.stroke();
+
+      /* Subtle inner tint */
+      lensCtx.beginPath();
+      lensCtx.arc(mx, my, LENS_R, 0, Math.PI * 2);
+      const ig = lensCtx.createRadialGradient(mx, my, 0, mx, my, LENS_R);
+      ig.addColorStop(0, 'rgba(0,212,255,.015)');
+      ig.addColorStop(1, 'rgba(0,212,255,.075)');
+      lensCtx.fillStyle = ig;
+      lensCtx.fill();
+    }
+
+    /* — Resize — */
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w, h);
+      lensCvs.width  = w;  lensCvs.height  = h;
+      camera.aspect  = w / h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* — Animate — */
+    let tick = 0;
+    function animate() {
+      requestAnimationFrame(animate);
+      tick++;
+
+      const t = tick * 0.006;
+      const pulse = Math.sin(t * 2.1) * 0.5 + 0.5;
+
+      /* Gentle sway */
+      brainMesh.rotation.y  = Math.sin(t * 0.32) * 0.38 + t * 0.055;
+      brainMesh.rotation.x  = Math.sin(t * 0.21) * 0.095;
+      wireframe.rotation.y  = brainMesh.rotation.y;
+      wireframe.rotation.x  = brainMesh.rotation.x;
+      outer.rotation.y      = brainMesh.rotation.y * 0.4;
+
+      /* Pulsing glow */
+      outerMat.opacity = 0.03 + pulse * 0.045;
+
+      /* Emissive breathe */
+      const ev = pulse * 0.18;
+      brainMat.emissive.setRGB(0, ev * 0.14, ev * 0.28);
+
+      /* Orbit lights */
+      light1.position.set(
+        Math.sin(t * 0.62) * 4.2,
+        Math.cos(t * 0.44) * 3,
+        3
+      );
+      light2.position.set(
+        Math.cos(t * 0.58) * 3.2,
+        -2,
+        Math.sin(t * 0.72) * 3
+      );
+
+      /* Particle drift */
+      particles.rotation.y = t * 0.07;
+      particles.rotation.x = t * 0.025;
+
+      renderer.render(scene, camera);
+      drawLens();
+    }
+    animate();
+
+  })(); // end initBrain
+  </script>
+</body>
+</html>
